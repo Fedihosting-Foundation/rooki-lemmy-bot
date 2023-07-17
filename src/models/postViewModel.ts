@@ -1,8 +1,8 @@
-import { Column, Entity, ObjectIdColumn, ObjectLiteral } from "typeorm";
+import { Column, Entity } from "typeorm";
 import baseModel from "./baseModel";
 import { Community, Person, Post, PostAggregates, PostView, SubscribedType } from "lemmy-js-client";
 
-@Entity({database: "rooki_posts"})
+@Entity({database: "rooki_post"})
 export default class postViewModel extends baseModel implements PostView  {
     @Column()
     post: Post;

@@ -1,17 +1,16 @@
 import {
   DataSource,
   FilterOperators,
-  FindManyOptions,
-  FindOneOptions,
-  FindOptionsWhere,
   MongoRepository,
   ObjectLiteral,
 } from "typeorm";
 import { MongoFindManyOptions } from "typeorm/find-options/mongodb/MongoFindManyOptions";
 import { MongoFindOneOptions } from "typeorm/find-options/mongodb/MongoFindOneOptions";
 import connection from "../connection";
+import { Service } from "typedi";
 
-export default class baseRepository<T extends ObjectLiteral> {
+@Service()
+class baseRepository<T extends ObjectLiteral> {
   connection: DataSource;
   repository: MongoRepository<T>;
   constructor() {
@@ -36,3 +35,4 @@ export default class baseRepository<T extends ObjectLiteral> {
     return await this.repository.findOne(options);
   }
 }
+export default baseRepository

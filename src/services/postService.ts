@@ -1,32 +1,84 @@
+import "reflect-metadata";
 import { PostView } from "lemmy-js-client";
-import postRepository from "../repository/postRepository";
-import Queue from "better-queue";
-import { Inject } from "typedi";
+import postViewRepository from "../repository/postViewRepository";
+import { Inject, Service } from "typedi";
 import postViewModel from "../models/postViewModel";
+import getConfig from "../helpers/configHelper";
+import { CommunityConfig } from "../models/iConfig";
+import baseService from "./baseService";
+import { activeCommunities } from "../config";
+import client, { getAuth } from "../main";
+import { getCommunity, sleep } from "../helpers/lemmyHelper";
+import emitEvent from "../helpers/eventHelper";
 
-export default class postService {
-  queue: Queue<PostView, postViewModel>;
+@Service()
+class postService extends baseService<
+  PostView,
+  postViewModel
+> {
   @Inject()
-  repository: postRepository;
+  repository: postViewRepository;
   constructor() {
-    const serviceThis = this;
-    this.queue = new Queue(async function (input, cb) {
-      try {
-        const foundPost = await serviceThis.repository.findOne({where: {post: {id: input.post.id}}});
-        if (foundPost) {
-            cb("Post already exists in database")
-            return
+    super(
+      async (input, cb) => {
+        const post = input as PostView;
+        try {
+          const config = getConfig(post.community);
+          const foundPost = await this.repository.findOne({
+            where: { "post.id": { $eq: post.post.id } },
+          });
+          if (foundPost) {
+            console.log("Post already exists in database " + foundPost.post.id);
+            const updatedPost = { ...foundPost, ...post };
+            const result = await this.repository.save(updatedPost);
+            if (post.post.deleted !== foundPost.post.deleted) {
+              emitEvent("postdeleted", result, config);
+            } else if (post.post.updated !== foundPost.post.updated) {
+              emitEvent("postupdated", result, config);
+            }
+            cb(null, result);
+            return;
+          }
+          const repositoryPost = this.repository.create();
+          const createdPost = { ...repositoryPost, ...post };
+
+          const result = await this.repository.save(createdPost);
+          emitEvent("postcreated", result, config);
+
+          console.log("Handled post", post.post.id);
+
+          cb(null, result);
+        } catch (e) {
+          console.log(e);
+          cb(e);
         }
-        const result = await serviceThis.repository.save(input);
-
-        // TODO: Handle Post
-
-        console.log("Handled post", input.post.id);
-
-        cb(null, result);
-      } catch (e) {
-        cb(e);
+      },
+      {
+        concurrent: 4,
       }
-    }, {autoResume: true});
+    );
+  }
+
+  async fetchAndUpdate() {
+    const posts: PostView[] = [];
+    for (const community of activeCommunities) {
+      try {
+        const result = await client.getPosts({
+          community_id: (await getCommunity({name: community})).community_view.community.id,
+          auth: getAuth(),
+          sort: "New",
+          type_: "Local",
+        });
+        console.log("Fetched posts for", community);
+        this.push(...result.posts);
+        posts.push(...result.posts);
+        await sleep(1000);
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    return posts;
   }
 }
+
+export default postService;

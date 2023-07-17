@@ -8,9 +8,9 @@
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
 
-    "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-
+    "experimentalDecorators": true,
+    
     "forceConsistentCasingInFileNames": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": false,

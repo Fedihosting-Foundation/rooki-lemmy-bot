@@ -11,7 +11,10 @@
     "watch": "nodemon --exec ts-node src/main.ts"
   },
   "dependencies": {
+    "@discordx/importer": "^1.2.2",
     "better-queue": "^3.8.12",
+    "discord.js": "^14.11.0",
+    "discordx": "^11.7.6",
     "dotenv": "^16.3.1",
     "lemmy-js-client": "^0.18.1",
     "mongodb": "^5.6.0",
