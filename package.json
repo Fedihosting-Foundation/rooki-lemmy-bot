@@ -5,8 +5,8 @@
   "license": "MIT",
   "main": "build/main.js",
   "scripts": {
-    "build": "tsc",
     "dev": "ts-node src/main.ts",
+    "build": "tsc",
     "start": "node build/main.js",
     "watch": "nodemon --exec ts-node src/main.ts"
   },

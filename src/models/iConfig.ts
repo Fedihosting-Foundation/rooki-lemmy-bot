@@ -15,6 +15,10 @@ export type CommunityConfig = Omit<
       posts: LogOptions;
       comments: LogOptions;
       reports: LogOptions;
+
+      profanity?: LogOptions & {
+        appendTextToLogMessage?: string;
+      };
     };
   };
 };
@@ -23,7 +27,6 @@ export type LogOptions = (
   | {
       channel?: string;
       threadId?: string;
-      webhook?: string;
     }
 ) & {
   enabled: boolean;
@@ -43,6 +46,10 @@ export default interface IConfig {
       posts: LogOptions;
       comments: LogOptions;
       reports: LogOptions;
+
+      profanity?: LogOptions & {
+        appendTextToLogMessage?: string;
+      };
     };
   };
 

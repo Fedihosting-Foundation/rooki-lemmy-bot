@@ -2,9 +2,19 @@ import { ILemmyCommand, LemmyEvents } from "../types/LemmyEvents";
 
 const events: { data: ILemmyOn; fn: (...args: any) => Promise<unknown> }[] = [];
 
+
+export function Lemmy<T extends { new(...args: any[]): {} }>(Base: T) {
+  return class extends Base {
+    constructor(...args: any[]) {
+      super(...args);
+     }
+  };
+}
+
 export interface ILemmyOn {
   event: LemmyEvents;
   community?: string[];
+  priority?: number;
 }
 export function LemmyOn(data: ILemmyOn) {
   return function (
@@ -24,7 +34,20 @@ export function getEvents() {
 }
 
 export function getEvent(event: LemmyEvents) {
-  return events.filter((x) => x.data.event === event);
+  return events
+    .filter((x) => x.data.event === event)
+    .sort((a, b) => {
+      if (a.data.priority && b.data.priority) {
+        return a.data.priority - b.data.priority;
+      }
+      if (a.data.priority) {
+        return -1;
+      }
+      if (b.data.priority) {
+        return 1;
+      }
+      return 0;
+    });
 }
 
 export interface ILemmyComm {
@@ -32,7 +55,10 @@ export interface ILemmyComm {
   community?: (string | number)[];
 }
 
-const lemmyCommandEvents: { data: ILemmyComm; fn: (...args: any) => Promise<unknown> }[] = [];
+const lemmyCommandEvents: {
+  data: ILemmyComm;
+  fn: (...args: any) => Promise<unknown>;
+}[] = [];
 
 export function LemmyCommand(data: ILemmyComm) {
   return function (

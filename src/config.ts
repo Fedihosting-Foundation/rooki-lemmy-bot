@@ -20,6 +20,11 @@ export const config: IConfig = {
             comments: { enabled: true },
             posts: { enabled: true },
             reports: { enabled: true },
+            profanity: {
+              enabled: true,
+              channel: "932286006156222497",
+              appendTextToLogMessage: "<@&1038182121572929586> Profanity detected!"
+            }
           },
         },
       },

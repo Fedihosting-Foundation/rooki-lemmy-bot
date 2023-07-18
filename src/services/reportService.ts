@@ -1,21 +1,16 @@
 import "reflect-metadata";
 import {
   CommentReportView,
-  PersonMentionView,
   PostReportView,
-  PostView,
 } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import getConfig from "../helpers/configHelper";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";
 import { sleep } from "../helpers/lemmyHelper";
-import personMetionViewRepository from "../repository/personMetionViewRepository";
-import personMentionViewModel from "../models/personMentionViewModel";
 import emitEvent from "../helpers/eventHelper";
 import commentReportViewRepository from "../repository/commentReportViewRepository";
 import postReportViewRepository from "../repository/postReportViewRepository";
-import commentViewModel from "../models/commentViewModel";
 import postReportViewModel from "../models/postReportViewModel";
 import commentReportViewModel from "../models/commentReportViewModel";
 
@@ -32,7 +27,7 @@ class reportService extends baseService<
     super(
       async (input, cb) => {
         const data = input as CommentReportView | PostReportView;
-        const config = getConfig(data.community);
+        const config = getConfig(data.community.name);
 
         try {
           if ("comment" in data) {

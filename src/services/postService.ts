@@ -23,7 +23,7 @@ class postService extends baseService<
       async (input, cb) => {
         const post = input as PostView;
         try {
-          const config = getConfig(post.community);
+          const config = getConfig(post.community.name);
           const foundPost = await this.repository.findOne({
             where: { "post.id": { $eq: post.post.id } },
           });

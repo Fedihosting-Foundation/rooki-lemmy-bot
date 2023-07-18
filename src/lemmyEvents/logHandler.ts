@@ -65,6 +65,14 @@ const getActionForCommentReport = (post: CommentReportView) => {
 
   return row;
 };
+
+export {
+  getActionForComment,
+  getActionForPost,
+  getActionForPostReport,
+  getActionForCommentReport,
+}
+
 class LogHandler {
   @LemmyOn({ event: "postcreated" })
   async handlePost(postData: postViewModel, communityConfig: CommunityConfig) {

@@ -1,23 +1,16 @@
 import {
   ActionRowBuilder,
-  ApplicationCommandOptionType,
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
-  CommandInteraction,
-  InteractionResponse,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   ModalSubmitInteraction,
   TextInputBuilder,
   TextInputStyle,
 } from "discord.js";
-import { ButtonComponent, Discord, Slash, SlashOption } from "discordx";
+import { ButtonComponent, Discord } from "discordx";
 import client, { getAuth } from "../main";
-import { LemmyOn } from "../decorators/lemmyPost";
-import { activeCommunities } from "../config";
-import { CommentReportView, LemmyHttp, PostReportView } from "lemmy-js-client";
-import getConfig from "../helpers/configHelper";
 
 @Discord()
 export default class LogCommands {

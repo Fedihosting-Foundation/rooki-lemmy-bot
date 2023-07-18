@@ -23,7 +23,7 @@ class commentService extends baseService<
       async (input, cb) => {
         const comment = input as CommentView
         try {
-          const config = getConfig(comment.community);
+          const config = getConfig(comment.community.name);
 
           const foundComment = await this.repository.findOne({
             where: { "comment.id": { $eq: comment.comment.id } },

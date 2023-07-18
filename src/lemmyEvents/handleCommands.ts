@@ -20,7 +20,7 @@ class CommandHandler {
     const restArgs = strippedComment.split(" ");
 
     const command = restArgs[0]?.toLowerCase() || "help";
-
+    restArgs.shift();
     const commandData = getCommand(command);
     if (!commandData) return;
     const { data, fn } = commandData;
@@ -43,7 +43,6 @@ class CommandHandler {
         return;
       }
     }
-    restArgs.shift();
     await fn(client, restArgs, config, mentionData);
   }
 }
