@@ -10,9 +10,9 @@ Still in Progress!
 
 # Setup
 1. Run `npm install`
-2. rename .env.example to .env
-3. put everything you want in
-4. ( For quick testing ) `npm run dev` for a smoother experience run `npm run build` and `npm run start` ( Everytime you change something in the .ts files! )
+2. Rename .env.example to .env
+3. Put everything you want in
+4. For quick testing run `npm run dev` otherwise for a smoother experience run `npm run build` and `npm run start` ( Everytime you change something in the .ts files! )
 
 # For Questions
 Ask roooooooooooooooooooooooooooooki on discord
