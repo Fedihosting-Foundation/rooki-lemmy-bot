@@ -26,9 +26,6 @@ class mentionService extends baseService<
             where: { "comment.id": { $eq: mention.comment.id } },
           });
           if (foundMention) {
-            console.log(
-              "Mention already exists in database " + mention.comment.id
-            );
             cb(null, foundMention);
             return;
           }
@@ -63,7 +60,6 @@ class mentionService extends baseService<
       console.log("Fetched Mentions");
       this.push(...result.mentions);
       mentions.push(...result.mentions);
-      await sleep(1000);
     } catch (e) {
       console.log(e);
     }

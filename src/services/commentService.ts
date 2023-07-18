@@ -29,9 +29,6 @@ class commentService extends baseService<
             where: { "comment.id": { $eq: comment.comment.id } },
           });
           if (foundComment) {
-            console.log(
-              "Comment already exists in database " + comment.comment.id
-            );
             const updatedComment = { ...foundComment, ...comment };
             const result = await this.repository.save(updatedComment);
             if (comment.comment.deleted !== foundComment.comment.deleted) {
@@ -77,7 +74,6 @@ class commentService extends baseService<
         });
         this.push(...result.comments);
         comments.push(...result.comments);
-        await sleep(1000);
       } catch (e) {
         console.log(e);
       }

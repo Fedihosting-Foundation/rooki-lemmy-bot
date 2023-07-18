@@ -1,6 +1,7 @@
 import {
   ActionRowBuilder,
   ButtonBuilder,
+  ButtonComponentData,
   ButtonInteraction,
   ButtonStyle,
   ModalActionRowComponentBuilder,
@@ -11,9 +12,140 @@ import {
 } from "discord.js";
 import { ButtonComponent, Discord } from "discordx";
 import client, { getAuth } from "../main";
+import getConfig from "../helpers/configHelper";
+import LogHelper from "../helpers/logHelper";
+import { PostView } from "lemmy-js-client";
+import { getActionForComment, getActionForCommentReport, getActionForPost, getActionForPostReport } from "../lemmyEvents/logHandler";
 
 @Discord()
 export default class LogCommands {
+  @ButtonComponent({ id: /refresh_(comment|post)_(.*)/ })
+  async refreshEmbed(initialInteraction: ButtonInteraction) {
+    await initialInteraction.deferReply({ ephemeral: true });
+    const args = initialInteraction.customId.split("_");
+    const isComment = args[1] === "comment";
+    const data =  isComment ? (await client.getComment({ auth: getAuth(), id: Number(args[args.length - 1]) })).comment_view : (await client.getPost({ auth: getAuth(), id: Number(args[args.length - 1]) })).post_view
+    const embed = "comment" in data
+      ? LogHelper.commentToEmbed(data)
+      : LogHelper.postToEmbed(data);
+
+    const isRemoved = embed.data.color === 0xff0000;
+
+    embed.addFields(
+      {
+        name: "Last Updated",
+        value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
+        inline: true,
+      },
+      {
+        name: "Update requested by",
+        value: `<@${initialInteraction.user.id}>`,
+      },
+    );
+
+    await initialInteraction.message.edit({
+      embeds: [embed],
+      components: [
+        "comment" in data ? getActionForComment(data) : getActionForPost(data),
+      ],
+    });
+    initialInteraction.editReply({
+      content: "Updated!",
+    });
+  }
+  @ButtonComponent({ id: /ban_user_(true|false)_([^_]*)_(.*)/ })
+  async banUserButton(initialInteraction: ButtonInteraction) {
+    const args = initialInteraction.customId.split("_");
+    const config = getConfig(args[args.length - 1]);
+    const banned = args[2] === "true";
+
+    if (!config.discordTeam?.includes(initialInteraction.user.id)) {
+      await initialInteraction.reply({
+        content:
+          "**You are not allowed to do this!** (Contact the owner of the Bot!)",
+        ephemeral: true,
+      });
+      return;
+    }
+    try {
+      const modal = new ModalBuilder()
+        .setCustomId("remove_comment_modal")
+        .setTitle(`${banned ? "Remove" : "Restore"} Comment`);
+
+      const reason = new TextInputBuilder()
+        .setCustomId("reason")
+        .setRequired(true)
+        .setLabel("Reason:")
+        .setStyle(TextInputStyle.Short);
+
+      const deleteData = new TextInputBuilder()
+        .setCustomId("deleteData")
+        .setRequired(true)
+        .setLabel("Delete Data? (y or n, n is default):")
+        .setPlaceholder("n")
+        .setStyle(TextInputStyle.Short);
+      const firstRow =
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          reason,
+          deleteData
+        );
+      modal.addComponents(firstRow);
+
+      const collectorFilter = (i: ModalSubmitInteraction) => {
+        i.deferUpdate();
+        return i.user.id === initialInteraction.user.id;
+      };
+      await initialInteraction.showModal(modal);
+
+      const interaction = await initialInteraction.awaitModalSubmit({
+        time: 120000,
+        filter: collectorFilter,
+      });
+      const result = ["reason", "deleteData"].map((key) =>
+        interaction.fields.getTextInputValue(key)
+      );
+
+      const post = await client.banFromCommunity({
+        auth: getAuth(),
+        ban: banned,
+        community_id: Number(args[args.length - 1]),
+        person_id: Number(args[args.length - 2]),
+        remove_data: result[1] === "y",
+        reason: `${
+          banned ? "Banned" : "Unbanned"
+        } by ${interaction.user.toString()} with the reason: ${result[0]}`,
+      });
+
+      await initialInteraction.message.edit({
+        content: `User was ${
+          banned ? "banned" : "unbanned"
+        } by ${interaction.user.toString()}!`,
+        components: [
+          new ActionRowBuilder<ButtonBuilder>().addComponents(
+            ...initialInteraction.message?.components[0].components
+              .filter((x) => !x.customId?.includes("ban_user_"))
+              .map((x) => new ButtonBuilder(x as ButtonComponentData)),
+            new ButtonBuilder()
+              .setCustomId(
+                `ban_user_${!banned}_${args[args.length - 2]}_${
+                  args[args.length - 1]
+                }`
+              )
+              .setLabel(`${banned ? "Ban" : "Unban"} ${args[args.length - 2]}`)
+              .setStyle(ButtonStyle.Danger)
+          ),
+        ],
+      });
+      await interaction.editReply({
+        content: `User ${banned ? "banned" : "unbanned"}!`,
+      });
+    } catch (exc) {
+      console.log(exc);
+      initialInteraction.channel?.send(
+        `Something went wrong ${initialInteraction.user.toString()}!}`
+      );
+    }
+  }
   @ButtonComponent({ id: /remove_comment_(true|false)_(.*)/ })
   async removeCommentButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
@@ -66,7 +198,10 @@ export default class LogCommands {
             new ButtonBuilder()
               .setCustomId(`remove_comment_${!removed}_${args[3]}`)
               .setLabel(`${removed ? "Restore" : "Remove"} Comment`)
-              .setStyle(ButtonStyle.Primary)
+              .setStyle(ButtonStyle.Primary),
+            ...initialInteraction.message?.components[0].components
+              .filter((x) => !x.customId?.includes("remove_comment_"))
+              .map((x) => new ButtonBuilder(x as ButtonComponentData))
           ),
         ],
       });
@@ -129,12 +264,7 @@ export default class LogCommands {
           removed ? "removed" : "restored"
         } by ${interaction.user.toString()}!`,
         components: [
-          new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setCustomId(`remove_post_${!removed}_${args[3]}`)
-              .setLabel(`${removed ? "Restore" : "Remove"} Post`)
-              .setStyle(ButtonStyle.Primary)
-          ),
+         getActionForPost(post.post_view)
         ],
       });
       await interaction.editReply({
@@ -196,12 +326,7 @@ export default class LogCommands {
           result[0] || "no reason given"
         }!`,
         components: [
-          new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setCustomId(`resolve_postreport_${!resolved}_${args[3]}`)
-              .setLabel(`${resolved ? "Unresolve" : "Resolve"} Post Report by ${interaction.user.toString()} with the reason: ${result[0]}`)
-              .setStyle(resolved ? ButtonStyle.Primary : ButtonStyle.Danger)
-          ),
+            getActionForPostReport(post.post_report_view)
         ],
       });
       await interaction.editReply({
@@ -262,12 +387,7 @@ export default class LogCommands {
           result[0] || "no reason given"
         }!`,
         components: [
-          new ActionRowBuilder<ButtonBuilder>().addComponents(
-            new ButtonBuilder()
-              .setCustomId(`resolve_postreport_${!resolved}_${args[3]}`)
-              .setLabel(`${resolved ? "Unresolve" : "Resolve"} Post Report`)
-              .setStyle(resolved ? ButtonStyle.Primary : ButtonStyle.Danger)
-          ),
+          getActionForCommentReport(comment.comment_report_view)
         ],
       });
       await interaction.editReply({

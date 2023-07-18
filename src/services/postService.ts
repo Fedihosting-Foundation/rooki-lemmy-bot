@@ -28,7 +28,6 @@ class postService extends baseService<
             where: { "post.id": { $eq: post.post.id } },
           });
           if (foundPost) {
-            console.log("Post already exists in database " + foundPost.post.id);
             const updatedPost = { ...foundPost, ...post };
             const result = await this.repository.save(updatedPost);
             if (post.post.deleted !== foundPost.post.deleted) {
@@ -72,10 +71,10 @@ class postService extends baseService<
         console.log("Fetched posts for", community);
         this.push(...result.posts);
         posts.push(...result.posts);
-        await sleep(1000);
       } catch (e) {
         console.log(e);
       }
+      await sleep(2500);
     }
     return posts;
   }

@@ -23,19 +23,31 @@ class manageService {
 
     setInterval(() => {
       console.log("Fetching Posts");
-      this.postService.fetchAndUpdate();
+      this.postService.fetchAndUpdate().catch(x => {
+        console.log("Post Error")
+        console.log(x)
+      });;
     }, config.fetchInterval.posts);
     setInterval(() => {
       console.log("Fetching Comments");
-      this.commentService.fetchAndUpdate();
+      this.commentService.fetchAndUpdate().catch(x => {
+        console.log("Comments Error")
+        console.log(x)
+      });;
     }, config.fetchInterval.comments);
     setInterval(() => {
       console.log("Fetching Mentions");
-      this.mentionService.fetchAndUpdate();
+      this.mentionService.fetchAndUpdate().catch(x => {
+        console.log("Mention Error")
+        console.log(x)
+      });
     }, config.fetchInterval.mentions);
     setInterval(() => {
         console.log("Fetching Reports");
-        this.reportService.fetchAndUpdate();
+        this.reportService.fetchAndUpdate().catch(x => {
+          console.log("Reports Error")
+          console.log(x)
+        });;
       }, config.fetchInterval.reports);
     this.reportService.start();
     this.mentionService.start();

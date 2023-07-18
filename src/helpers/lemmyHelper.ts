@@ -41,3 +41,5 @@ export async function getCommunity(
     return community;
   }
 }
+
+export const instanceUrl = process.env.LEMMY_URL || "https://lemmy.world";

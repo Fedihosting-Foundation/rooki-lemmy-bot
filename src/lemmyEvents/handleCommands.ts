@@ -4,7 +4,7 @@ import { CommunityConfig } from "../models/iConfig";
 import personMentionViewModel from "../models/personMentionViewModel";
 
 class CommandHandler {
-  @LemmyOn({ event: "personmentioned" })
+  @LemmyOn({ event: "personmentioned", priority: 1 })
   async handleCommand(
     mentionData: personMentionViewModel,
     config: CommunityConfig

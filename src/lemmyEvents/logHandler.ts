@@ -19,11 +19,26 @@ const getActionForComment = (comment: CommentView) => {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
   const removeButton = new ButtonBuilder()
-    .setCustomId("remove_comment_true_" + comment.comment.id)
-    .setLabel("Remove Comment")
+    .setCustomId(
+      `remove_comment_${!comment.comment.removed}_${comment.comment.id}`
+    )
+    .setLabel(`${!comment.comment.removed ? "Remove" : "Recover"} Comment`)
+    .setStyle(ButtonStyle.Primary);
+  const banButton = new ButtonBuilder()
+    .setCustomId(
+      `ban_user_${!comment.creator_banned_from_community}_${
+        comment.community.id
+      }_${comment.creator.id}`
+    )
+    .setLabel(
+      `${!comment.creator_banned_from_community ? "Ban" : "Unban"} User`
+    )
     .setStyle(ButtonStyle.Danger);
 
-  row.addComponents(removeButton);
+  const refreshButton = new ButtonBuilder().setCustomId(
+    `refresh_comment_${comment.comment.id}`
+  ).setStyle(ButtonStyle.Secondary).setEmoji("🔄");
+  row.addComponents(removeButton, banButton, refreshButton);
 
   return row;
 };
@@ -32,11 +47,23 @@ const getActionForPost = (post: PostView) => {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
   const removeButton = new ButtonBuilder()
-    .setCustomId("remove_post_true_" + post.post.id)
-    .setLabel("Remove Post")
+    .setCustomId(`remove_post_${!post.post.removed}_${post.post.id}`)
+    .setLabel(`${!post.post.removed ? "Remove" : "Restore"} Post`)
+    .setStyle(ButtonStyle.Primary);
+
+  const banButton = new ButtonBuilder()
+    .setCustomId(
+      `ban_user_${!post.creator_banned_from_community}_${post.community.id}_${
+        post.creator.id
+      }`
+    )
+    .setLabel(`${!post.creator_banned_from_community ? "Ban" : "Unban"} User`)
     .setStyle(ButtonStyle.Danger);
 
-  row.addComponents(removeButton);
+  const refreshButton = new ButtonBuilder().setCustomId(
+    `refresh_post_${post.post.id}`
+  ).setStyle(ButtonStyle.Secondary).setEmoji("🔄");
+  row.addComponents(removeButton, banButton, refreshButton);
 
   return row;
 };
@@ -45,20 +72,32 @@ const getActionForPostReport = (post: PostReportView) => {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
   const resolveButton = new ButtonBuilder()
-    .setCustomId("resolve_postreport_true_" + post.post_report.id)
-    .setLabel("Resolve Post Report")
+    .setCustomId(
+      `resolve_postreport_${!post.post_report.resolved}_${post.post_report.id}`
+    )
+    .setLabel(
+      `${!post.post_report.resolved ? "Resolve" : "Unresolve"} Post Report`
+    )
     .setStyle(ButtonStyle.Danger);
 
   row.addComponents(resolveButton);
 
   return row;
 };
-const getActionForCommentReport = (post: CommentReportView) => {
+const getActionForCommentReport = (comment: CommentReportView) => {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
   const resolveButton = new ButtonBuilder()
-    .setCustomId("resolve_commentreport_true_" + post.comment_report.id)
-    .setLabel("Resolve Comment Report")
+    .setCustomId(
+      `resolve_commentreport_${!comment.comment_report.resolved}_${
+        comment.comment_report.id
+      }`
+    )
+    .setLabel(
+      `${
+        !comment.comment_report.resolved ? "Resolve" : "Unresolve"
+      } Comment Report`
+    )
     .setStyle(ButtonStyle.Danger);
 
   row.addComponents(resolveButton);
@@ -71,7 +110,7 @@ export {
   getActionForPost,
   getActionForPostReport,
   getActionForCommentReport,
-}
+};
 
 class LogHandler {
   @LemmyOn({ event: "postcreated" })
@@ -101,7 +140,6 @@ class LogHandler {
     commentData: commentViewModel,
     communityConfig: CommunityConfig
   ) {
-    
     if (
       !communityConfig.logs.discord.enabled ||
       !communityConfig.logs.discord.comments.enabled
@@ -115,10 +153,10 @@ class LogHandler {
       },
       {
         channel:
-          communityConfig.logs.discord.posts.channel ||
+          communityConfig.logs.discord.comments.channel ||
           communityConfig.logs.discord.logChannel,
         guild: communityConfig.logs.discord.logGuild,
-        options: communityConfig.logs.discord.posts,
+        options: communityConfig.logs.discord.comments,
       }
     );
   }

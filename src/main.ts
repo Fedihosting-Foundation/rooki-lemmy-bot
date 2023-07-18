@@ -7,8 +7,8 @@ dotenv.config();
 import { LemmyHttp } from "lemmy-js-client";
 import Container, { Service } from "typedi";
 import manageService from "./services/manageService";
-import { activeCommunities } from "./config";
 import connection from "./connection";
+import { instanceUrl } from "./helpers/lemmyHelper";
 ​
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
@@ -69,7 +69,7 @@ bot.on("messageCreate", (message: Message) => {
 });
 
 const client: LemmyHttp = new LemmyHttp(
-  process.env.LEMMY_URL || "https://lemmy.world"
+  instanceUrl
 );
 let jwt: string;
 

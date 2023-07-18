@@ -1,18 +1,16 @@
 import "reflect-metadata";
-import {
-  CommentReportView,
-  PostReportView,
-} from "lemmy-js-client";
+import { CommentReportView, PostReportView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import getConfig from "../helpers/configHelper";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";
-import { sleep } from "../helpers/lemmyHelper";
+import { getCommunity, sleep } from "../helpers/lemmyHelper";
 import emitEvent from "../helpers/eventHelper";
 import commentReportViewRepository from "../repository/commentReportViewRepository";
 import postReportViewRepository from "../repository/postReportViewRepository";
 import postReportViewModel from "../models/postReportViewModel";
 import commentReportViewModel from "../models/commentReportViewModel";
+import { activeCommunities } from "../config";
 
 @Service()
 class reportService extends baseService<
@@ -35,10 +33,6 @@ class reportService extends baseService<
               where: { "comment_report.id": { $eq: data.comment_report.id } },
             });
             if (foundCommentReport) {
-              console.log(
-                "Comment Report already exists in database " +
-                  data.comment_report.id
-              );
               const updatedReport = { ...foundCommentReport, ...data };
               const result = await this.commentRepository.save(updatedReport);
               if (
@@ -69,9 +63,6 @@ class reportService extends baseService<
               where: { "post_report.id": { $eq: data.post_report.id } },
             });
             if (foundPostReport) {
-              console.log(
-                "Post Report already exists in database " + data.post.id
-              );
               const updatedReport = { ...foundPostReport, ...data };
               const result = await this.postRepository.save(updatedReport);
               if (
@@ -111,22 +102,27 @@ class reportService extends baseService<
   async fetchAndUpdate() {
     const postReports: PostReportView[] = [];
     const commentReports: CommentReportView[] = [];
-    try {
-      const postResult = await client.listPostReports({
-        auth: getAuth(),
-      });
-      console.log("Fetched Post Reports");
-      this.push(...postResult.post_reports);
-      postReports.push(...postResult.post_reports);
-      await sleep(1000);
-      const commentResult = await client.listCommentReports({
-        auth: getAuth(),
-      });
-      console.log("Fetched Post Reports");
-      this.push(...commentResult.comment_reports);
-      commentReports.push(...commentResult.comment_reports);
-    } catch (e) {
-      console.log(e);
+    for (const community of activeCommunities) {
+      try {
+        const postResult = await client.listPostReports({
+          auth: getAuth(),
+          community_id: (await getCommunity({name: community})).community_view.community.id,
+        });
+        console.log("Fetched Post Reports");
+        this.push(...postResult.post_reports);
+        postReports.push(...postResult.post_reports);
+        await sleep(1000);
+        const commentResult = await client.listCommentReports({
+          auth: getAuth(),
+          community_id: (await getCommunity({name: community})).community_view.community.id,
+        });
+        console.log("Fetched Post Reports");
+        this.push(...commentResult.comment_reports);
+        commentReports.push(...commentResult.comment_reports);
+      } catch (e) {
+        console.log(e);
+      }
+      await sleep(5000)
     }
     return [postReports, commentReports];
   }
