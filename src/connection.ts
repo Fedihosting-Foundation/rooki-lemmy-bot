@@ -12,6 +12,7 @@ const connection = new DataSource({
     database: process.env.MONGODB_DB || "rooki_bot",
     username: process.env.MONGODB_USERNAME,
     password: process.env.MONGODB_PASSWORD,
+    authSource: process.env.MONGODB_AUTHSOURCE || "admin",
     entities: [postViewModel, postReportViewModel, commentViewModel, commentReportViewModel, personMentionViewModel],
 })
 
