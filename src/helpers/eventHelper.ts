@@ -1,5 +1,5 @@
-import { LemmyOnEvents, getEvent } from "../decorators/lemmyPost";
-import { LemmyEvents, LemmyPostEvents } from "../types/LemmyEvents";
+import { getEvent } from "../decorators/lemmyPost";
+import { LemmyEvents } from "../types/LemmyEvents";
 
 export default function emitEvent(eventName: LemmyEvents, ...data: any) {
   console.log("Emitting event", eventName);

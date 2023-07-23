@@ -3,27 +3,31 @@ import { PostView } from "lemmy-js-client";
 import postViewRepository from "../repository/postViewRepository";
 import { Inject, Service } from "typedi";
 import postViewModel from "../models/postViewModel";
-import getConfig from "../helpers/configHelper";
-import { CommunityConfig } from "../models/iConfig";
 import baseService from "./baseService";
-import { activeCommunities } from "../config";
 import client, { getAuth } from "../main";
-import { getCommunity, sleep } from "../helpers/lemmyHelper";
+import { sleep } from "../helpers/lemmyHelper";
 import emitEvent from "../helpers/eventHelper";
+import CommunityService from "./guildService";
+import communityConfigService from "./communityConfigService";
 
 @Service()
-class postService extends baseService<
-  PostView,
-  postViewModel
-> {
+class postService extends baseService<PostView, postViewModel> {
   @Inject()
   repository: postViewRepository;
+
+  @Inject()
+  CommunityService: CommunityService;
+
+  @Inject()
+  CommunityConfigService: communityConfigService;
+
   constructor() {
     super(
       async (input, cb) => {
         const post = input as PostView;
         try {
-          const config = getConfig(post.community.name);
+          const config = await this.CommunityConfigService.getCommunityConfig(post.community);
+          if (!config) return;
           const foundPost = await this.repository.findOne({
             where: { "post.id": { $eq: post.post.id } },
           });
@@ -60,15 +64,17 @@ class postService extends baseService<
 
   async fetchAndUpdate() {
     const posts: PostView[] = [];
-    for (const community of activeCommunities) {
+    for (const community of await this.CommunityConfigService.getCommunities()) {
       try {
         const result = await client.getPosts({
-          community_id: (await getCommunity({name: community})).community_view.community.id,
+          community_id: (
+            await this.CommunityService.getCommunity({ name: community.community.name })
+          ).community_view.community.id,
           auth: getAuth(),
           sort: "New",
           type_: "Local",
         });
-        console.log("Fetched posts for", community);
+        console.log("Fetched posts for", community.community.name);
         this.push(...result.posts);
         posts.push(...result.posts);
       } catch (e) {

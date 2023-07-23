@@ -12,61 +12,101 @@ import {
 } from "discord.js";
 import { ButtonComponent, Discord } from "discordx";
 import client, { getAuth } from "../main";
-import getConfig from "../helpers/configHelper";
 import LogHelper from "../helpers/logHelper";
-import { PostView } from "lemmy-js-client";
-import { getActionForComment, getActionForCommentReport, getActionForPost, getActionForPostReport } from "../lemmyEvents/logHandler";
+import {
+  getActionForComment,
+  getActionForCommentReport,
+  getActionForPost,
+  getActionForPostReport,
+} from "../lemmyEvents/logHandler";
+import communityConfigService from "../services/communityConfigService";
+import { Inject } from "typedi";
+import CommunityService from "../services/guildService";
 
 @Discord()
 export default class LogCommands {
+  @Inject()
+  communityConfigService: communityConfigService;
+  @Inject()
+  communityService: CommunityService;
+
   @ButtonComponent({ id: /refresh_(comment|post)_(.*)/ })
   async refreshEmbed(initialInteraction: ButtonInteraction) {
     await initialInteraction.deferReply({ ephemeral: true });
-    const args = initialInteraction.customId.split("_");
-    const isComment = args[1] === "comment";
-    const data =  isComment ? (await client.getComment({ auth: getAuth(), id: Number(args[args.length - 1]) })).comment_view : (await client.getPost({ auth: getAuth(), id: Number(args[args.length - 1]) })).post_view
-    const embed = "comment" in data
-      ? LogHelper.commentToEmbed(data)
-      : LogHelper.postToEmbed(data);
+    try {
+      const args = initialInteraction.customId.split("_");
+      const isComment = args[1] === "comment";
+      const data = isComment
+        ? (
+            await client.getComment({
+              auth: getAuth(),
+              id: Number(args[args.length - 1]),
+            })
+          ).comment_view
+        : (
+            await client.getPost({
+              auth: getAuth(),
+              id: Number(args[args.length - 1]),
+            })
+          ).post_view;
+      const embed =
+        "comment" in data
+          ? LogHelper.commentToEmbed(data)
+          : LogHelper.postToEmbed(data);
 
-    const isRemoved = embed.data.color === 0xff0000;
+      const isRemoved = embed.data.color === 0xff0000;
 
-    embed.addFields(
-      {
-        name: "Last Updated",
-        value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
-        inline: true,
-      },
-      {
-        name: "Update requested by",
-        value: `<@${initialInteraction.user.id}>`,
-      },
-    );
+      embed.addFields(
+        {
+          name: "Last Updated",
+          value: `<t:${Math.floor(Date.now() / 1000)}:R>`,
+          inline: true,
+        },
+        {
+          name: "Update requested by",
+          value: `<@${initialInteraction.user.id}>`,
+        }
+      );
 
-    await initialInteraction.message.edit({
-      embeds: [embed],
-      components: [
-        "comment" in data ? getActionForComment(data) : getActionForPost(data),
-      ],
-    });
-    initialInteraction.editReply({
-      content: "Updated!",
-    });
+      await initialInteraction.message.edit({
+        embeds: [embed],
+        components: [
+          "comment" in data
+            ? getActionForComment(data)
+            : getActionForPost(data),
+        ],
+      });
+      initialInteraction.editReply({
+        content: "Updated!",
+      });
+    } catch (exc) {
+      console.log(exc);
+      initialInteraction.editReply({
+        content: "Something went wrong!",
+      });
+    }
   }
   @ButtonComponent({ id: /ban_user_(true|false)_([^_]*)_(.*)/ })
   async banUserButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
-    const config = getConfig(args[args.length - 1]);
+    const config = await this.communityConfigService.getCommunityConfig(
+      (
+        await this.communityService.getCommunity({
+          id: Number(args[args.length - 1]),
+        })
+      ).community_view.community
+    );
     const banned = args[2] === "true";
 
-    if (!config.discordTeam?.includes(initialInteraction.user.id)) {
-      await initialInteraction.reply({
-        content:
-          "**You are not allowed to do this!** (Contact the owner of the Bot!)",
-        ephemeral: true,
-      });
-      return;
-    }
+    // #TODO: Add check if he is verified and if he is a mod of the community
+    // if (!config.discordTeam?.includes(initialInteraction.user.id)) {
+    //   await initialInteraction.reply({
+    //     content:
+    //       "**You are not allowed to do this!** (Contact the owner of the Bot!)",
+    //     ephemeral: true,
+    //   });
+    //   return;
+    // }
     try {
       const modal = new ModalBuilder()
         .setCustomId("remove_comment_modal")
@@ -263,9 +303,7 @@ export default class LogCommands {
         content: `Post was ${
           removed ? "removed" : "restored"
         } by ${interaction.user.toString()}!`,
-        components: [
-         getActionForPost(post.post_view)
-        ],
+        components: [getActionForPost(post.post_view)],
       });
       await interaction.editReply({
         content: `Post ${removed ? "removed" : "restored"}!`,
@@ -325,9 +363,7 @@ export default class LogCommands {
         } by ${interaction.user.toString()} with the reason: ${
           result[0] || "no reason given"
         }!`,
-        components: [
-            getActionForPostReport(post.post_report_view)
-        ],
+        components: [getActionForPostReport(post.post_report_view)],
       });
       await interaction.editReply({
         content: `Post ${resolved ? "resolved" : "unresolved"}!`,
@@ -386,9 +422,7 @@ export default class LogCommands {
         } by ${interaction.user.toString()} with the reason: ${
           result[0] || "no reason given"
         }!`,
-        components: [
-          getActionForCommentReport(comment.comment_report_view)
-        ],
+        components: [getActionForCommentReport(comment.comment_report_view)],
       });
       await interaction.editReply({
         content: `Post ${resolved ? "resolved" : "unresolved"}!`,

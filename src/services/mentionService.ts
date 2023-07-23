@@ -1,13 +1,12 @@
 import "reflect-metadata";
 import { PersonMentionView, PostView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
-import getConfig from "../helpers/configHelper";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";
-import { sleep } from "../helpers/lemmyHelper";
 import personMetionViewRepository from "../repository/personMetionViewRepository";
 import personMentionViewModel from "../models/personMentionViewModel";
 import emitEvent from "../helpers/eventHelper";
+import communityConfigService from "./communityConfigService";
 
 @Service()
 class mentionService extends baseService<
@@ -16,12 +15,18 @@ class mentionService extends baseService<
 > {
   @Inject()
   repository: personMetionViewRepository;
+
+  @Inject()
+  CommunityConfigService: communityConfigService;
+
   constructor() {
     super(
       async (input, cb) => {
-        const mention = input as PersonMentionView 
+        const mention = input as PersonMentionView;
         try {
-          const config = getConfig(mention.community.name);
+          const config = await this.CommunityConfigService.getCommunityConfig(
+            mention.community
+          );
           const foundMention = await this.repository.findOne({
             where: { "comment.id": { $eq: mention.comment.id } },
           });

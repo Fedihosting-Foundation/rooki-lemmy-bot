@@ -1,3 +1,6 @@
+import { CommentReportView, CommentView, PersonMentionView, PostReportView, PostView } from "lemmy-js-client";
+import communityConfigModel from "../models/communityConfigModel";
+
 export type LemmyPostEvents = "postcreated" | "postupdated" | "postdeleted";
 export type LemmyPostReportEvents = "postreportcreated" | "postreportupdated";
 export type LemmyCommentEvents = "commentcreated" | "commentupdated" | "commentdeleted";
@@ -20,4 +23,15 @@ export type ILemmyCommand = {
     usage?: string;
     example?: string;
     communities?: (string|number)[];
+}
+
+export type LemmyEventArguments<T> = {
+  data: T;
+  config : communityConfigModel;
+}
+
+export type LemmyCommandArguments = {
+  restArgs: string[];
+  config : communityConfigModel;
+  data: PersonMentionView;
 }

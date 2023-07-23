@@ -1,30 +1,36 @@
 import { CommentView, PostView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
-import getConfig from "../helpers/configHelper";
-import { CommunityConfig } from "../models/iConfig";
 import baseService from "./baseService";
 import commentViewModel from "../models/commentViewModel";
 import commentViewRepository from "../repository/commentViewRepository";
-import { activeCommunities } from "../config";
 import client, { getAuth } from "../main";
-import { getCommunity, sleep } from "../helpers/lemmyHelper";
 import "reflect-metadata";
 import emitEvent from "../helpers/eventHelper";
+import CommunityService from "./guildService";
+import communityConfigModel from "../models/communityConfigModel";
+import communityConfigService from "./communityConfigService";
 
 @Service()
 class commentService extends baseService<
-  CommentView & { config?: CommunityConfig },
+  CommentView & { config?: communityConfigModel },
   commentViewModel
 > {
   @Inject()
   repository: commentViewRepository;
+
+  @Inject()
+  CommunityService: CommunityService;
+  
+  @Inject()
+  CommunityConfigService: communityConfigService;
+
   constructor() {
     super(
       async (input, cb) => {
         const comment = input as CommentView
         try {
-          const config = getConfig(comment.community.name);
-
+          const config = await this.CommunityConfigService.getCommunityConfig(comment.community);
+          if (!config) return
           const foundComment = await this.repository.findOne({
             where: { "comment.id": { $eq: comment.comment.id } },
           });
@@ -45,8 +51,6 @@ class commentService extends baseService<
           const result = await this.repository.save(createdComment);
           emitEvent("commentcreated", result, config);
 
-          // TODO: Handle Post
-
           console.log("Handled Comment", comment.post.id);
 
           cb(null, result);
@@ -62,11 +66,11 @@ class commentService extends baseService<
 
   async fetchAndUpdate() {
     const comments: CommentView[] = [];
-    for (const community of activeCommunities) {
+    for (const community of await this.CommunityConfigService.getCommunities()) {
       try {
         const result = await client.getComments({
           community_id: (
-            await getCommunity({ name: community })
+            await this.CommunityService.getCommunity({ name: community.community.name })
           ).community_view.community.id,
           auth: getAuth(),
           sort: "New",

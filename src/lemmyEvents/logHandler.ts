@@ -7,11 +7,10 @@ import {
   PostReportView,
   PostView,
 } from "lemmy-js-client";
-import { activeCommunities } from "../config";
 import LogHelper from "../helpers/logHelper";
-import { CommunityConfig } from "../models/iConfig";
 import postViewModel from "../models/postViewModel";
 import commentViewModel from "../models/commentViewModel";
+import communityConfigModel from "../models/communityConfigModel";
 
 const logService = LogService;
 
@@ -28,7 +27,7 @@ const getActionForComment = (comment: CommentView) => {
     .setCustomId(
       `ban_user_${!comment.creator_banned_from_community}_${
         comment.community.id
-      }_${comment.creator.id}`
+      }`
     )
     .setLabel(
       `${!comment.creator_banned_from_community ? "Ban" : "Unban"} User`
@@ -114,10 +113,9 @@ export {
 
 class LogHandler {
   @LemmyOn({ event: "postcreated" })
-  async handlePost(postData: postViewModel, communityConfig: CommunityConfig) {
+  async handlePost(postData: postViewModel, communityConfig: communityConfigModel) {
     if (
-      !communityConfig.logs.discord.enabled ||
-      !communityConfig.logs.discord.posts.enabled
+      !communityConfig.logConfig.discord.posts.enabled
     )
       return;
     logService.Log(
@@ -128,21 +126,20 @@ class LogHandler {
       },
       {
         channel:
-          communityConfig.logs.discord.posts.channel ||
-          communityConfig.logs.discord.logChannel,
-        guild: communityConfig.logs.discord.logGuild,
-        options: communityConfig.logs.discord.posts,
+          communityConfig.logConfig.discord.posts.channel ||
+          communityConfig.logConfig.discord.logChannel,
+        guild: communityConfig.logConfig.discord.logGuild,
+        options: communityConfig.logConfig.discord.posts,
       }
     );
   }
   @LemmyOn({ event: "commentcreated" })
   async handleComments(
     commentData: commentViewModel,
-    communityConfig: CommunityConfig
+    communityConfig: communityConfigModel
   ) {
     if (
-      !communityConfig.logs.discord.enabled ||
-      !communityConfig.logs.discord.comments.enabled
+      !communityConfig.logConfig.discord.comments.enabled
     )
       return;
     logService.Log(
@@ -153,21 +150,20 @@ class LogHandler {
       },
       {
         channel:
-          communityConfig.logs.discord.comments.channel ||
-          communityConfig.logs.discord.logChannel,
-        guild: communityConfig.logs.discord.logGuild,
-        options: communityConfig.logs.discord.comments,
+          communityConfig.logConfig.discord.comments.channel ||
+          communityConfig.logConfig.discord.logChannel,
+        guild: communityConfig.logConfig.discord.logGuild,
+        options: communityConfig.logConfig.discord.comments,
       }
     );
   }
-  @LemmyOn({ event: "commentreportcreated", community: activeCommunities })
+  @LemmyOn({ event: "commentreportcreated" })
   async logCommentReports(
     reportView: CommentReportView,
-    communityConfig: CommunityConfig
+    communityConfig: communityConfigModel
   ) {
     if (
-      !communityConfig.logs.discord.enabled ||
-      !communityConfig.logs.discord.reports.enabled
+      !communityConfig.logConfig.discord.reports.enabled
     )
       return;
     await logService.Log(
@@ -178,22 +174,21 @@ class LogHandler {
       },
       {
         channel:
-          communityConfig.logs.discord.reports.channel ||
-          communityConfig.logs.discord.logChannel,
-        guild: communityConfig.logs.discord.logGuild,
-        options: communityConfig.logs.discord.reports,
+          communityConfig.logConfig.discord.reports.channel ||
+          communityConfig.logConfig.discord.logChannel,
+        guild: communityConfig.logConfig.discord.logGuild,
+        options: communityConfig.logConfig.discord.reports,
       }
     );
   }
 
-  @LemmyOn({ event: "postreportcreated", community: activeCommunities })
+  @LemmyOn({ event: "postreportcreated" })
   async logPostReports(
     reportView: PostReportView,
-    communityConfig: CommunityConfig
+    communityConfig: communityConfigModel
   ) {
     if (
-      !communityConfig.logs.discord.enabled ||
-      !communityConfig.logs.discord.reports.enabled
+      !communityConfig.logConfig.discord.reports.enabled
     )
       return;
     await logService.Log(
@@ -204,10 +199,10 @@ class LogHandler {
       },
       {
         channel:
-          communityConfig.logs.discord.reports.channel ||
-          communityConfig.logs.discord.logChannel,
-        guild: communityConfig.logs.discord.logGuild,
-        options: communityConfig.logs.discord.reports,
+          communityConfig.logConfig.discord.reports.channel ||
+          communityConfig.logConfig.discord.logChannel,
+        guild: communityConfig.logConfig.discord.logGuild,
+        options: communityConfig.logConfig.discord.reports,
       }
     );
   }

@@ -8,6 +8,7 @@ import {
   PostReportView,
   CommentReportView,
   Comment,
+  PersonView,
 } from "lemmy-js-client";
 import { instanceUrl } from "./lemmyHelper";
 
@@ -55,16 +56,21 @@ export default class LogHelper {
       },
       {
         name: "Deleted",
-        value: (comment.deleted || comment.removed) ? (comment.removed ? "Removed by moderator" : "Yes") : "No",
+        value:
+          comment.deleted || comment.removed
+            ? comment.removed
+              ? "Removed by moderator"
+              : "Yes"
+            : "No",
         inline: true,
       },
       {
         name: "Parent NSFW",
         value: post.nsfw ? "Yes" : "No",
         inline: true,
-      }
+      },
     ]);
-    if(comment.removed) embed.setColor(0xff0000);
+    if (comment.removed) embed.setColor(0xff0000);
 
     return embed;
   }
@@ -114,17 +120,22 @@ export default class LogHelper {
       },
       {
         name: "Deleted",
-        value: (post.deleted || post.removed) ? (post.removed ? "Removed by moderator" : "Yes") : "No",
+        value:
+          post.deleted || post.removed
+            ? post.removed
+              ? "Removed by moderator"
+              : "Yes"
+            : "No",
         inline: true,
       },
       {
         name: "NSFW",
         value: post.nsfw ? "Yes" : "No",
         inline: true,
-      }
+      },
     ]);
 
-    if(post.removed) embed.setColor(0xff0000);
+    if (post.removed) embed.setColor(0xff0000);
 
     try {
       embed.setImage(post.thumbnail_url || post.url || null);
@@ -196,5 +207,33 @@ export default class LogHelper {
       });
 
     return [embed, commentEmbed];
+  }
+
+  static userToEmbed({ counts, person }: PersonView) {
+    const embed = new EmbedBuilder()
+      .setTitle("Person Detail")
+      .setDescription(person.bio || "**User has no Bio**")
+      .setAuthor({
+        name: person.name,
+        iconURL: person.avatar ? person.avatar : undefined,
+      })
+      .setTimestamp(new Date(person.published + "Z"))
+      .addFields([
+        { name: "ID", value: String(person.id), inline: true },
+        { name: "Posts", value: String(counts.post_count), inline: true },
+        { name: "Comments", value: String(counts.comment_count), inline: true },
+        {
+          name: "Comment Score",
+          value: String(counts.comment_score),
+          inline: true,
+        },
+        { name: "Post Score", value: String(counts.post_score), inline: true },
+      ])
+      .setURL(`${instanceUrl}/u/${person.name}`)
+      .setFooter({
+        text: `User`,
+      });
+
+    return embed;
   }
 }

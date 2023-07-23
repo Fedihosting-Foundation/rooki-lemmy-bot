@@ -1,16 +1,16 @@
 import "reflect-metadata";
 import { CommentReportView, PostReportView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
-import getConfig from "../helpers/configHelper";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";
-import { getCommunity, sleep } from "../helpers/lemmyHelper";
+import { sleep } from "../helpers/lemmyHelper";
 import emitEvent from "../helpers/eventHelper";
 import commentReportViewRepository from "../repository/commentReportViewRepository";
 import postReportViewRepository from "../repository/postReportViewRepository";
 import postReportViewModel from "../models/postReportViewModel";
 import commentReportViewModel from "../models/commentReportViewModel";
-import { activeCommunities } from "../config";
+import CommunityService from "./guildService";
+import communityConfigService from "./communityConfigService";
 
 @Service()
 class reportService extends baseService<
@@ -19,14 +19,24 @@ class reportService extends baseService<
 > {
   @Inject()
   commentRepository: commentReportViewRepository;
+
   @Inject()
   postRepository: postReportViewRepository;
+
+  @Inject()
+  CommunityService: CommunityService;
+
+  @Inject()
+  CommunityConfigService: communityConfigService;
+
   constructor() {
     super(
       async (input, cb) => {
         const data = input as CommentReportView | PostReportView;
-        const config = getConfig(data.community.name);
-
+        const config = await this.CommunityConfigService.getCommunityConfig(
+          data.community
+        );
+        if (!config) return;
         try {
           if ("comment" in data) {
             const foundCommentReport = await this.commentRepository.findOne({
@@ -86,8 +96,6 @@ class reportService extends baseService<
             cb(null, result);
             return;
           }
-
-          // TODO: Handle Post
         } catch (e) {
           console.log(e);
           cb(e);
@@ -102,11 +110,15 @@ class reportService extends baseService<
   async fetchAndUpdate() {
     const postReports: PostReportView[] = [];
     const commentReports: CommentReportView[] = [];
-    for (const community of activeCommunities) {
+    for (const community of await this.CommunityConfigService.getCommunities()) {
       try {
         const postResult = await client.listPostReports({
           auth: getAuth(),
-          community_id: (await getCommunity({name: community})).community_view.community.id,
+          community_id: (
+            await this.CommunityService.getCommunity({
+              name: community.community.name,
+            })
+          ).community_view.community.id,
         });
         console.log("Fetched Post Reports");
         this.push(...postResult.post_reports);
@@ -114,7 +126,11 @@ class reportService extends baseService<
         await sleep(1000);
         const commentResult = await client.listCommentReports({
           auth: getAuth(),
-          community_id: (await getCommunity({name: community})).community_view.community.id,
+          community_id: (
+            await this.CommunityService.getCommunity({
+              name: community.community.name,
+            })
+          ).community_view.community.id,
         });
         console.log("Fetched Post Reports");
         this.push(...commentResult.comment_reports);
@@ -122,7 +138,7 @@ class reportService extends baseService<
       } catch (e) {
         console.log(e);
       }
-      await sleep(5000)
+      await sleep(15000);
     }
     return [postReports, commentReports];
   }

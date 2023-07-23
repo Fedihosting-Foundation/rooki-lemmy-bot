@@ -2,59 +2,91 @@ import { Lemmy, LemmyOn } from "../decorators/lemmyPost";
 import LogHelper from "../helpers/logHelper";
 import { bot } from "../main";
 import commentViewModel from "../models/commentViewModel";
-import { CommunityConfig } from "../models/iConfig";
 import postViewModel from "../models/postViewModel";
 import { getActionForComment, getActionForPost } from "./logHandler";
 import badWords from "../badlanguage.json";
+import {
+  AnyThreadChannel,
+  GuildBasedChannel,
+  GuildTextBasedChannel,
+  TextChannel,
+  ThreadChannel,
+} from "discord.js";
+import communityConfigModel from "../models/communityConfigModel";
 
 async function checkForBadLanguage(
   textToFilter: string[],
-  config: CommunityConfig,
+  config: communityConfigModel,
   data: postViewModel | commentViewModel
 ) {
-  if (!config.logs.discord.enabled || !config.logs.discord.profanity?.enabled)
+  if (!config.logConfig.enabled || !config.logConfig.discord.profanity?.enabled)
     return;
   const hasProfanity = textToFilter.some((x) => {
     return badWords.some((badWord) => {
-      return x.toLowerCase().trim().includes(badWord);
+      return x.toLowerCase().includes(" " + badWord + " ");
     });
   });
 
   if (hasProfanity) {
-    const guild = bot.guilds.cache.get(config.logs.discord.logGuild);
+    const guild = bot.guilds.cache.get(config.logConfig.discord.logGuild);
     if (!guild) {
       console.log("Invalid Guild!");
       return;
     }
-    let channel = guild.channels.cache.get(
-      config.logs.discord.profanity.channel!
+    let channel:
+      | GuildBasedChannel
+      | AnyThreadChannel
+      | ThreadChannel
+      | undefined = guild.channels.cache.get(
+      config.logConfig.discord.profanity.channel!
     );
 
     if (!channel) {
       channel =
-        (await guild.channels.fetch(config.logs.discord.profanity.channel!)) ||
-        undefined;
+        (await guild.channels.fetch(
+          config.logConfig.discord.profanity.channel!
+        )) || undefined;
     }
 
-    if (!channel || !("send" in channel)) {
+    if (!channel || !("send" in channel) || !("threads" in channel)) {
       console.log("Invalid Channel!");
       return;
     }
     if ("comment" in data) {
       const embed = LogHelper.commentToEmbed(data);
-      embed.setColor("#FF0000");
-
+      embed.setColor("#FFF000");
+      if (config.logConfig.discord.profanity.threadId) {
+        channel =
+          channel.threads.cache.get(
+            config.logConfig.discord.profanity.threadId
+          ) ||
+          (await channel.threads.fetch(
+            config.logConfig.discord.profanity.threadId
+          )) ||
+          undefined;
+      }
+      if (!channel) return;
       channel.send({
-        content: config.logs.discord.profanity.appendTextToLogMessage,
+        content: "Profanity detected!",
         embeds: [embed],
         components: [getActionForComment(data)],
       });
     } else {
       const embed = LogHelper.postToEmbed(data);
-      embed.setColor("#FF0000");
-
+      embed.setColor("#FFF000");
+      if (config.logConfig.discord.profanity.threadId) {
+        channel =
+          channel.threads.cache.get(
+            config.logConfig.discord.profanity.threadId
+          ) ||
+          (await channel.threads.fetch(
+            config.logConfig.discord.profanity.threadId
+          )) ||
+          undefined;
+      }
+      if (!channel) return;
       channel.send({
-        content: config.logs.discord.profanity.appendTextToLogMessage,
+        content: "Profanity detected!",
         embeds: [embed],
         components: [getActionForPost(data)],
       });
@@ -64,21 +96,21 @@ async function checkForBadLanguage(
 
 class warnForBadLanguage {
   @LemmyOn({ event: "postcreated" })
-  async checkForBadPost(postData: postViewModel, config: CommunityConfig) {
+  async checkForBadPost(postData: postViewModel, config: communityConfigModel) {
     checkForBadLanguage(
       [postData.post.body || "", postData.post.name],
       config,
       postData
     ).catch((x) => {
       console.log(x);
-      console.log("Something went wrong CHECKCOMMENT");
+      console.log("Something went wrong CHECKPOST");
     });
   }
 
   @LemmyOn({ event: "commentcreated" })
   async checkForBadComment(
     commentData: commentViewModel,
-    config: CommunityConfig
+    config: communityConfigModel
   ) {
     checkForBadLanguage(
       [commentData.comment.content],
