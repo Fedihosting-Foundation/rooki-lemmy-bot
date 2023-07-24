@@ -2,10 +2,10 @@ import IConfig from "./models/iConfig";
 
 export const config: IConfig = {
   fetchInterval: {
-    posts: 1000 * 15,
-    comments: 1000 * 20,
+    posts: 1000 * 30,
+    comments: 1000 * 35,
     reports: 1000 * 60,
-    mentions: 1000 * 15,
+    mentions: 1000 * 40,
   },
   // communityConfig: [
   //   {
