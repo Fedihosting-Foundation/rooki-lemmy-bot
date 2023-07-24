@@ -44,6 +44,7 @@ export default class LogCommands {
     interaction: CommandInteraction
   ) {
     await interaction.deferReply();
+
     try {
       const post = await client.getPost({
         auth: getAuth(),
@@ -51,6 +52,33 @@ export default class LogCommands {
       });
 
       const embed = LogHelper.postToEmbed(post.post_view);
+
+      await interaction.editReply({ embeds: [embed] });
+    } catch (exc) {
+      console.log(exc);
+      interaction.editReply("Something went wrong");
+    }
+  }
+
+  @Slash({ description: "Fetch a user from Lemmy", name: "fetchuser" })
+  async getUser(
+    @SlashOption({
+      description: "The user ID",
+      name: "userid",
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    userId: string,
+    interaction: CommandInteraction
+  ) {
+    await interaction.deferReply();
+    try {
+      const user = await client.getPersonDetails({
+        auth: getAuth(),
+        username: userId,
+      });
+
+      const embed = LogHelper.userToEmbed(user.person_view);
 
       await interaction.editReply({ embeds: [embed] });
     } catch (exc) {

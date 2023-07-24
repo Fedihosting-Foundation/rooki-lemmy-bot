@@ -9,7 +9,6 @@ import Container, { Service } from "typedi";
 import manageService from "./services/manageService";
 import connection from "./connection";
 import { instanceUrl } from "./helpers/lemmyHelper";
-​
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -24,9 +23,7 @@ export const bot = new Client({
   // botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
 
   // Discord intents
-  intents: [
-    IntentsBitField.Flags.Guilds,
-  ],
+  intents: [IntentsBitField.Flags.Guilds],
 
   // Debug logs are disabled in silent mode
   silent: false,
@@ -63,9 +60,7 @@ bot.on("messageCreate", (message: Message) => {
   bot.executeCommand(message);
 });
 
-const client: LemmyHttp = new LemmyHttp(
-  instanceUrl
-);
+const client: LemmyHttp = new LemmyHttp(instanceUrl);
 let jwt: string;
 
 export function getAuth() {
@@ -73,7 +68,7 @@ export function getAuth() {
 }
 
 async function start() {
-  await connection.initialize()
+  await connection.initialize();
   const results = await client.login({
     password: process.env.LEMMY_PASSWORD || "",
     username_or_email: process.env.LEMMY_USERNAME || "",
@@ -84,7 +79,7 @@ async function start() {
   }
   jwt = results.jwt;
   await importx(__dirname + "/lemmy{Command,Events}/**/*.{ts,js}");
-  
+
   if (process.env.BOT_TOKEN) {
     await importx(__dirname + "/{events,commands}/**/*.{ts,js}");
 
@@ -97,8 +92,10 @@ async function start() {
   } else {
     console.log("BOT_TOKEN NOT FOUND. Doesnt starting discord Bot.");
   }
-  const management = typeDiDependencyRegistryEngine.getService(manageService)!
-  management.startTimers()
+  const management = typeDiDependencyRegistryEngine.getService(manageService)!;
+  management.startTimers();
 }
-start()
+
+start();
+
 export default client;

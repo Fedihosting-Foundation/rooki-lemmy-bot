@@ -1,25 +1,17 @@
 import {
-  ActionRowBuilder,
   ApplicationCommandOptionType,
-  ButtonBuilder,
-  ButtonStyle,
   ChannelType,
   CommandInteraction,
-  ComponentType,
   GuildTextBasedChannel,
-  GuildTextChannelType,
   PublicThreadChannel,
 } from "discord.js";
 import {
   Discord,
   Slash,
   SlashChoice,
-  SlashChoiceType,
   SlashGroup,
   SlashOption,
 } from "discordx";
-import client, { getAuth } from "../main";
-import LogHelper from "../helpers/logHelper";
 import verifiedUserService from "../services/verifiedUserService";
 import { Inject } from "typedi";
 import communityConfigService from "../services/communityConfigService";

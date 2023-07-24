@@ -9,7 +9,7 @@ export const config: IConfig = {
   },
   // communityConfig: [
   //   {
-  //     communities: ["hdev"],
+  //     communities: ["hdev", "world"],
   //     config: {
   //       discordTeam: ["710213572898193428"],
   //       logs: {
