@@ -1,17 +1,11 @@
-import { Lemmy, LemmyOn } from "../decorators/lemmyPost";
+import { LemmyOn } from "../decorators/lemmyPost";
 import LogHelper from "../helpers/logHelper";
 import { bot } from "../main";
 import commentViewModel from "../models/commentViewModel";
 import postViewModel from "../models/postViewModel";
 import { getActionForComment, getActionForPost } from "./logHandler";
 import badWords from "../badlanguage.json";
-import {
-  AnyThreadChannel,
-  GuildBasedChannel,
-  GuildTextBasedChannel,
-  TextChannel,
-  ThreadChannel,
-} from "discord.js";
+import { AnyThreadChannel, GuildBasedChannel, ThreadChannel } from "discord.js";
 import communityConfigModel from "../models/communityConfigModel";
 
 async function checkForBadLanguage(

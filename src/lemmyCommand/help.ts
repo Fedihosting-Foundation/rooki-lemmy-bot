@@ -1,4 +1,4 @@
-import { LemmyHttp, PersonMentionView } from "lemmy-js-client";
+import { LemmyHttp } from "lemmy-js-client";
 import { LemmyCommand, getCommands } from "../decorators/lemmyPost";
 import { getAuth } from "../main";
 import { LemmyCommandArguments } from "../types/LemmyEvents";

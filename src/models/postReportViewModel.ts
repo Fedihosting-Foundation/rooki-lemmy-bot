@@ -1,7 +1,6 @@
 import { Column, Entity } from "typeorm";
 import baseModel from "./baseModel";
 import {
-  Comment,
   Community,
   Person,
   Post,

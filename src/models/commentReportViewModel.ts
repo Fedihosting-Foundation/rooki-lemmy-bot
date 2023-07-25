@@ -8,7 +8,6 @@ import {
   Community,
   Person,
   Post,
-  SubscribedType,
 } from "lemmy-js-client";
 
 @Entity({ name: "rooki_comment_report" })

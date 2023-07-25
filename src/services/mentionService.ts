@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { PersonMentionView, PostView } from "lemmy-js-client";
+import { PersonMentionView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";

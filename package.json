@@ -5,13 +5,15 @@
   "license": "MIT",
   "main": "build/main.js",
   "scripts": {
-    "dev": "ts-node src/main.ts",
+    "dev": "ts-node-esm src/main.ts",
     "build": "tsc",
     "start": "node build/main.js",
     "watch": "nodemon --exec ts-node src/main.ts"
   },
   "dependencies": {
     "@discordx/importer": "^1.2.2",
+    "@discordx/pagination": "^3.4.1",
+    "axios": "^1.4.0",
     "better-queue": "^3.8.12",
     "discord.js": "^14.11.0",
     "discordx": "^11.7.6",
@@ -19,9 +21,9 @@
     "lemmy-js-client": "^0.18.1",
     "mongodb": "^5.6.0",
     "reflect-metadata": "^0.1.13",
+    "semver": ">=7.5.2",
     "typedi": "^0.10.0",
-    "typeorm": "^0.3.17",
-    "semver": ">=7.5.2"
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@types/better-queue": "^3.8.3",

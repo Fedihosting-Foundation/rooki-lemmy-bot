@@ -22,28 +22,33 @@ export default class CommunityService {
         },
     force = false
   ) {
-    if ("name" in data) {
-      if (!force && this.cache[data.name]) return this.cache[data.name];
-      const community = await client.getCommunity({
-        auth: getAuth(),
-        name: data.name,
-      });
-      const now = new Date().getTime();
-      const newData = { ...community, cacheTime: now };
-      this.cache[data.name] = newData;
-      this.cache[community.community_view.community.id] = newData;
-      return community;
-    } else {
-      if (!force && this.cache[data.id]) return this.cache[data.id];
-      const community = await client.getCommunity({
-        auth: getAuth(),
-        id: data.id,
-      });
-      const now = new Date().getTime();
-      const newData = { ...community, cacheTime: now };
-      this.cache[data.id] = newData;
-      this.cache[community.community_view.community.name] = newData;
-      return community;
+    try {
+      if ("name" in data) {
+        if (!force && this.cache[data.name]) return this.cache[data.name];
+        const community = await client.getCommunity({
+          auth: getAuth(),
+          name: data.name,
+        });
+        const now = new Date().getTime();
+        const newData = { ...community, cacheTime: now };
+        this.cache[data.name] = newData;
+        this.cache[community.community_view.community.id] = newData;
+        return community;
+      } else {
+        if (!force && this.cache[data.id]) return this.cache[data.id];
+        const community = await client.getCommunity({
+          auth: getAuth(),
+          id: data.id,
+        });
+        const now = new Date().getTime();
+        const newData = { ...community, cacheTime: now };
+        this.cache[data.id] = newData;
+        this.cache[community.community_view.community.name] = newData;
+        return community;
+      }
+    } catch (e) {
+      console.log(e);
+      return;
     }
   }
 }

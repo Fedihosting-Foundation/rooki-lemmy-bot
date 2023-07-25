@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
+    "target": "ES2016",
+    "module": "CommonJS",
     "outDir": "build",
     "rootDir": "src",
     "strict": true,
@@ -16,7 +16,10 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": false,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "noEmit": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["build", "node_modules"]

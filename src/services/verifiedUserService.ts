@@ -1,4 +1,4 @@
-import { Person } from "lemmy-js-client";
+import { CommunityModeratorView, Person } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import "reflect-metadata";
 import verifiedUserRepository from "../repository/verifiedUserRepository";
@@ -45,6 +45,14 @@ class verifiedUserService {
       },
     });
   }
+
+  async isModeratorOf(discordUser: User, moderators: CommunityModeratorView[]) {
+    const connection = await this.getConnection(undefined, discordUser);
+    if (!connection) return false;
+    return moderators.some((m) => m.moderator.id === connection.lemmyUser.id);
+  }
+
+
   verifyCode(code: number) {
     const index = this.codes.findIndex((c) => c.code === code);
     if (index < 0) return [];

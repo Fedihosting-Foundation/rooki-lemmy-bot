@@ -20,17 +20,19 @@ class commentService extends baseService<
 
   @Inject()
   CommunityService: CommunityService;
-  
+
   @Inject()
   CommunityConfigService: communityConfigService;
 
   constructor() {
     super(
       async (input, cb) => {
-        const comment = input as CommentView
+        const comment = input as CommentView;
         try {
-          const config = await this.CommunityConfigService.getCommunityConfig(comment.community);
-          if (!config) return
+          const config = await this.CommunityConfigService.getCommunityConfig(
+            comment.community
+          );
+          if (!config) return;
           const foundComment = await this.repository.findOne({
             where: { "comment.id": { $eq: comment.comment.id } },
           });
@@ -39,7 +41,9 @@ class commentService extends baseService<
             const result = await this.repository.save(updatedComment);
             if (comment.comment.deleted !== foundComment.comment.deleted) {
               emitEvent("commentdeleted", result, config);
-            } else if (comment.comment.updated !== foundComment.comment.updated) {
+            } else if (
+              comment.comment.updated !== foundComment.comment.updated
+            ) {
               emitEvent("commentupdated", result, config);
             }
             cb(null, result);
@@ -66,12 +70,11 @@ class commentService extends baseService<
 
   async fetchAndUpdate() {
     const comments: CommentView[] = [];
-    for (const community of await this.CommunityConfigService.getCommunities()) {
+    for (const configCommunity of await this.CommunityConfigService.getCommunities()) {
       try {
+        if (!configCommunity) continue;
         const result = await client.getComments({
-          community_id: (
-            await this.CommunityService.getCommunity({ name: community.community.name })
-          ).community_view.community.id,
+          community_id: configCommunity.community.id,
           auth: getAuth(),
           sort: "New",
           type_: "Local",

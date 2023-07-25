@@ -15,7 +15,18 @@ export type CommunityLogConfig = {
     reports: LogOptions;
 
     profanity?: LogOptions;
+
+    filterlog?: LogOptions;
   };
+};
+
+export type CommunityFilterConfig = {
+  id: string;
+  enabled: boolean;
+  posts: boolean;
+  comments: boolean;
+  words: string[];
+  action: "remove" | "ban" | "report" | "log";
 };
 
 export type FetchIntervals = "posts" | "comments" | "reports" | "mentions";

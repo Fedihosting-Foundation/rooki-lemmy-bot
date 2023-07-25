@@ -4,7 +4,6 @@ import commentService from "./commentService";
 import config from "../config";
 import "reflect-metadata";
 import mentionService from "./mentionService";
-import client, { getAuth } from "../main";
 import reportService from "./reportService";
 @Service()
 class manageService {
