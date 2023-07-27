@@ -12,6 +12,7 @@ import verifiedUserService from "../services/verifiedUserService";
 import { Inject } from "typedi";
 import communityConfigService from "../services/communityConfigService";
 import CommunityService from "../services/communityService";
+import fetch from "cross-fetch";
 import {
   Pagination,
   PaginationItem,
