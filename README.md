@@ -18,3 +18,5 @@ Still in Progress!
 ## For Questions
 
 Ask roooooooooooooooooooooooooooooki on discord
+
+Just ask!
