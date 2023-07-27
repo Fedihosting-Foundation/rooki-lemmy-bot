@@ -1,5 +1,3 @@
-import { typeDiDependencyRegistryEngine } from "discordx";
-import communityConfigService from "../services/communityConfigService";
 import { LemmyOn } from "../decorators/lemmyPost";
 import commentViewModel from "../models/commentViewModel";
 import communityConfigModel from "../models/communityConfigModel";
@@ -8,10 +6,6 @@ import LogService from "../services/logService";
 import LogHelper from "../helpers/logHelper";
 import { getActionForComment, getActionForPost } from "./logHandler";
 import postViewModel from "../models/postViewModel";
-
-const commConfigService = typeDiDependencyRegistryEngine.getService(
-  communityConfigService
-);
 
 export default class FilterHandler {
   @LemmyOn({ event: "postcreated" })
@@ -27,6 +21,7 @@ export default class FilterHandler {
       const found = checkText(x.words, [
         postData.post.body || "",
         postData.post.name,
+        postData.post.url,
       ]);
       if (found.found) {
         console.log("Found a match!");
@@ -249,13 +244,14 @@ export default class FilterHandler {
 
 const checkText = (
   filterText: string[],
-  words: string[]
+  words: (string | undefined)[]
 ): { found: boolean; value?: string } => {
   const data: { found: boolean; value?: string } = {
     found: false,
     value: undefined,
   };
   const found = words.findIndex((word) => {
+    if (!word) return false;
     let regex: RegExp | string = word;
     try {
       regex = new RegExp(word, "im");
