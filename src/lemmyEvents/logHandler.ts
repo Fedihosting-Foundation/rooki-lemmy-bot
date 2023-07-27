@@ -72,29 +72,52 @@ const getActionForPost = (post: PostView) => {
 const getActionForPostReport = (post: PostReportView) => {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
+  const removeButton = new ButtonBuilder()
+    .setCustomId(`remove_post_${!post.post.removed}_${post.post.id}`)
+    .setLabel(`${!post.post.removed ? "Remove" : "Restore"} Post`)
+    .setStyle(ButtonStyle.Primary);
+
+  const banButton = new ButtonBuilder()
+    .setCustomId(
+      `ban_user_${!post.creator_banned_from_community}_${post.community.id}_${
+        post.creator.id
+      }`
+    )
+
   const resolveButton = new ButtonBuilder()
     .setCustomId(
-      `resolve_postreport_${!post.post_report.resolved}_${
-        post.post_report.id
-      }_${post.community.id}`
+      `resolve_postreport_${!post.post_report.resolved}_${post.post_report.id}`
     )
     .setLabel(
       `${!post.post_report.resolved ? "Resolve" : "Unresolve"} Post Report`
     )
     .setStyle(ButtonStyle.Danger);
 
-  row.addComponents(resolveButton);
+  row.addComponents(removeButton, banButton, resolveButton);
 
   return row;
 };
 const getActionForCommentReport = (comment: CommentReportView) => {
   const row = new ActionRowBuilder<ButtonBuilder>();
 
+  const removeButton = new ButtonBuilder()
+    .setCustomId(
+      `remove_comment_${!comment.comment.removed}_${comment.comment.id}`
+    )
+    .setLabel(`${!comment.comment.removed ? "Remove" : "Recover"} Comment`)
+    .setStyle(ButtonStyle.Primary);
+  const banButton = new ButtonBuilder()
+    .setCustomId(
+      `ban_user_${!comment.creator_banned_from_community}_${
+        comment.community.id
+      }`
+    )
+
   const resolveButton = new ButtonBuilder()
     .setCustomId(
       `resolve_commentreport_${!comment.comment_report.resolved}_${
         comment.comment_report.id
-      }_${comment.community.id}`
+      }`
     )
     .setLabel(
       `${
@@ -103,7 +126,7 @@ const getActionForCommentReport = (comment: CommentReportView) => {
     )
     .setStyle(ButtonStyle.Danger);
 
-  row.addComponents(resolveButton);
+  row.addComponents(removeButton, banButton, resolveButton);
 
   return row;
 };
