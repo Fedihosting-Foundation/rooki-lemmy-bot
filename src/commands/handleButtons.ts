@@ -21,7 +21,8 @@ import {
 } from "../lemmyEvents/logHandler";
 import communityConfigService from "../services/communityConfigService";
 import { Inject } from "typedi";
-import CommunityService from "../services/guildService";
+import CommunityService from "../services/communityService";
+import verifiedUserService from "../services/verifiedUserService";
 
 @Discord()
 export default class LogCommands {
@@ -29,6 +30,8 @@ export default class LogCommands {
   communityConfigService: communityConfigService;
   @Inject()
   communityService: CommunityService;
+  @Inject()
+  verifiedUserService: verifiedUserService;
 
   @ButtonComponent({ id: /refresh_(comment|post)_(.*)/ })
   async refreshEmbed(initialInteraction: ButtonInteraction) {
@@ -49,6 +52,27 @@ export default class LogCommands {
               id: Number(args[args.length - 1]),
             })
           ).post_view;
+
+      const community = await this.communityService.getCommunity({
+        id: data.community.id,
+      });
+      if (!community) {
+        await initialInteraction.editReply({
+          content: "**Community not found!**",
+        });
+        return;
+      }
+      if (
+        !await this.verifiedUserService.isModeratorOf(
+          initialInteraction.user,
+          community.community_view.community.id
+        )
+      ) {
+        await initialInteraction.editReply(
+          "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+        );
+        return;
+      }
       const embed =
         "comment" in data
           ? LogHelper.commentToEmbed(data)
@@ -89,13 +113,33 @@ export default class LogCommands {
   @ButtonComponent({ id: /ban_user_(true|false)_([^_]*)_(.*)/ })
   async banUserButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
+    const community = await this.communityService.getCommunity({
+      id: Number(args[args.length - 1]),
+    });
+    if (!community) {
+      await initialInteraction.reply({
+        content: "**Community not found!** (Contact the owner of the Bot!)",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    if (
+      !await this.verifiedUserService.isModeratorOf(
+        initialInteraction.user,
+        community.community_view.community.id
+      )
+    ) {
+      await initialInteraction.editReply(
+        "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+      );
+      return;
+    }
+
     const config = await this.communityConfigService.getCommunityConfig(
-      (
-        await this.communityService.getCommunity({
-          id: Number(args[args.length - 1]),
-        })
-      ).community_view.community
+      community.community_view.community
     );
+
     const banned = args[2] === "true";
 
     // #TODO: Add check if he is verified and if he is a mod of the community
@@ -190,7 +234,32 @@ export default class LogCommands {
   async removeCommentButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
     const removed = args[2] === "true";
+
     try {
+      try {
+        const oldComment = await client.getComment({
+          auth: getAuth(),
+          id: parseInt(args[3]),
+        });
+
+        if (
+          !await this.verifiedUserService.isModeratorOf(
+            initialInteraction.user,
+            oldComment.comment_view.community.id
+          )
+        ) {
+          await initialInteraction.editReply(
+            "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+          );
+          return;
+        }
+      } catch (e) {
+        await initialInteraction.reply({
+          content: "**Comment not found!**",
+          ephemeral: true,
+        });
+        return;
+      }
       const modal = new ModalBuilder()
         .setCustomId("remove_comment_modal")
         .setTitle(`${removed ? "Remove" : "Restore"} Comment`);
@@ -260,7 +329,33 @@ export default class LogCommands {
   async removePostButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
     const removed = args[2] === "true";
+
     try {
+      try {
+        const oldPost = await client.getPost({
+          auth: getAuth(),
+          id: parseInt(args[3]),
+        });
+
+        if (
+          !await this.verifiedUserService.isModeratorOf(
+            initialInteraction.user,
+            oldPost.post_view.community.id
+          )
+        ) {
+          await initialInteraction.editReply(
+            "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+          );
+          return;
+        }
+      } catch (e) {
+        await initialInteraction.reply({
+          content: "**Comment not found!**",
+          ephemeral: true,
+        });
+        return;
+      }
+
       const modal = new ModalBuilder()
         .setCustomId("remove_post_modal")
         .setTitle(`${removed ? "Remove" : "Restore"} Post`);
@@ -316,11 +411,30 @@ export default class LogCommands {
     }
   }
 
-  @ButtonComponent({ id: /resolve_postreport_(true|false)_(.*)/ })
+  @ButtonComponent({ id: /resolve_postreport_(true|false)_(.*)_(.*)/ })
   async resolvePostReport(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
     const resolved = args[2] === "true";
     try {
+      try {
+        if (
+          !await this.verifiedUserService.isModeratorOf(
+            initialInteraction.user,
+            Number(args[4])
+          )
+        ) {
+          await initialInteraction.editReply(
+            "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+          );
+          return;
+        }
+      } catch (e) {
+        await initialInteraction.reply({
+          content: "**Report not found!**",
+          ephemeral: true,
+        });
+        return;
+      }
       const modal = new ModalBuilder()
         .setCustomId("resolve_postreport_modal")
         .setTitle(`${resolved ? "Resolve" : "Unrestore"} Post Report`);
@@ -376,11 +490,31 @@ export default class LogCommands {
     }
   }
 
-  @ButtonComponent({ id: /resolve_commentreport_(true|false)_(.*)/ })
+  @ButtonComponent({ id: /resolve_commentreport_(true|false)_(.*)_(.*)/ })
   async resolveCommentReport(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
     const resolved = args[2] === "true";
     try {
+      try {
+        if (
+          !await this.verifiedUserService.isModeratorOf(
+            initialInteraction.user,
+            Number(args[4])
+          )
+        ) {
+          await initialInteraction.editReply(
+            "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+          );
+          return;
+        }
+      } catch (e) {
+        await initialInteraction.reply({
+          content: "**Report not found!**",
+          ephemeral: true,
+        });
+        return;
+      }
+
       const modal = new ModalBuilder()
         .setCustomId("resolve_commentreport_modal")
         .setTitle(`${resolved ? "Resolve" : "Unrestore"} Comment Report`);

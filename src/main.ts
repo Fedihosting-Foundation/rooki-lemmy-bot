@@ -9,6 +9,7 @@ import Container, { Service } from "typedi";
 import manageService from "./services/manageService";
 import connection from "./connection";
 import { instanceUrl } from "./helpers/lemmyHelper";
+import timedPostService from "./services/timedPostService";
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -93,6 +94,7 @@ async function start() {
     console.log("BOT_TOKEN NOT FOUND. Doesnt starting discord Bot.");
   }
   const management = typeDiDependencyRegistryEngine.getService(manageService)!;
+  const timedPost = typeDiDependencyRegistryEngine.getService(timedPostService)!;
   management.startTimers();
 }
 

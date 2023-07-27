@@ -29,6 +29,19 @@ export type CommunityFilterConfig = {
   action: "remove" | "ban" | "report" | "log";
 };
 
+export type CommunityTimedConfig = {
+  id: string;
+  title: string;
+  url?: string;
+  nsfw?: boolean;
+  language_id?: number;
+  enabled: boolean;
+  content: string;
+  lock: boolean;
+  lastExecutionTimestamp?: number;
+  interval: string;
+};
+
 export type FetchIntervals = "posts" | "comments" | "reports" | "mentions";
 
 export default interface IConfig {

@@ -1,7 +1,11 @@
 import { Community } from "lemmy-js-client";
 import { Column, Entity } from "typeorm";
 import baseModel from "./baseModel";
-import { CommunityFilterConfig, CommunityLogConfig } from "./iConfig";
+import {
+  CommunityFilterConfig,
+  CommunityLogConfig,
+  CommunityTimedConfig,
+} from "./iConfig";
 
 @Entity({ name: "rooki_community_config" })
 export default class communityConfigModel extends baseModel {
@@ -20,6 +24,9 @@ export default class communityConfigModel extends baseModel {
     },
   };
 
-  @Column({array: true})
-  filterConfig: CommunityFilterConfig[] = []
+  @Column({ array: true })
+  filterConfig: CommunityFilterConfig[] = [];
+
+  @Column({ array: true })
+  timedConfig: CommunityTimedConfig[] = [];
 }

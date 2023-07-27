@@ -6,7 +6,7 @@ import commentViewRepository from "../repository/commentViewRepository";
 import client, { getAuth } from "../main";
 import "reflect-metadata";
 import emitEvent from "../helpers/eventHelper";
-import CommunityService from "./guildService";
+import CommunityService from "./communityService";
 import communityConfigModel from "../models/communityConfigModel";
 import communityConfigService from "./communityConfigService";
 

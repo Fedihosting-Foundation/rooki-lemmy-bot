@@ -20,6 +20,7 @@
     "dotenv": "^16.3.1",
     "lemmy-js-client": "^0.18.1",
     "mongodb": "^5.6.0",
+    "node-cron": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "semver": ">=7.5.2",
     "typedi": "^0.10.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@types/better-queue": "^3.8.3",
+    "@types/node-cron": "^3.0.8",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.8",
     "semver": ">=7.5.2",

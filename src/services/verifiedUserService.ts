@@ -1,14 +1,77 @@
-import { CommunityModeratorView, Person } from "lemmy-js-client";
+import { Person } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import "reflect-metadata";
 import verifiedUserRepository from "../repository/verifiedUserRepository";
 import { User } from "discord.js";
 import { ObjectId } from "mongodb";
+import { getUser } from "../helpers/discordHelper";
+import CommunityService from "./communityService";
+import BetterQueue from "better-queue";
+import verifiedUserModel from "../models/verifiedUserModel";
 
 @Service()
 class verifiedUserService {
   @Inject()
   repository: verifiedUserRepository;
+
+  @Inject()
+  communityService: CommunityService;
+
+  userQueue: BetterQueue<verifiedUserModel[]> = new BetterQueue({
+    process: async (data: verifiedUserModel[][], cb) => {
+      const users = data.flat();
+      users.forEach(async (user) => {
+        try {
+          const discordUser = await getUser(user.discordUser.id);
+          if (!discordUser) {
+            await this.repository.delete(user);
+            return;
+          }
+          const lemmyUser = await this.communityService.getUser(
+            {
+              id: user.lemmyUser.id,
+            },
+            true
+          );
+
+          if (!lemmyUser) {
+            await this.repository.delete(user);
+            return;
+          }
+
+          if (user.discordUser.username !== discordUser.username) {
+            await this.repository.delete(user);
+            return;
+          }
+
+          if (user.lemmyUser.name !== lemmyUser.person_view.person.name) {
+            await this.repository.delete(user);
+            return;
+          }
+
+          user.discordUser = discordUser;
+          user.lemmyUser = lemmyUser.person_view.person;
+          await this.repository.save(user);
+          console.log(`Updated ${user.discordUser.username}`);
+        } catch (e) {
+          console.log(e);
+        }
+      });
+      cb(null, data);
+    },
+    batchDelay: 500,
+    batchSize: 5,
+    afterProcessDelay: 2500,
+  });
+
+  constructor() {
+    setInterval(() => {
+      this.repository.findAll().then((users) => {
+        this.userQueue.push(users);
+      });
+    }, 1000 * 60 * 5);
+    this.userQueue.resume();
+  }
 
   codes: { code: number; lemmyUser: Person }[] = [];
 
@@ -46,12 +109,21 @@ class verifiedUserService {
     });
   }
 
-  async isModeratorOf(discordUser: User, moderators: CommunityModeratorView[]) {
+  async isModeratorOf(discordUser: User, communityId: number) {
+    if(discordUser.id === process.env.DEV_USER_ID) return true;
     const connection = await this.getConnection(undefined, discordUser);
     if (!connection) return false;
-    return moderators.some((m) => m.moderator.id === connection.lemmyUser.id);
+    const community = await this.communityService.getCommunity({
+      id: communityId,
+    });
+    return (
+      connection.lemmyUser.admin ||
+      (community &&
+        community.moderators.some(
+          (m) => m.moderator.id === connection.lemmyUser.id
+        ))
+    );
   }
-
 
   verifyCode(code: number) {
     const index = this.codes.findIndex((c) => c.code === code);

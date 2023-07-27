@@ -1,11 +1,13 @@
-import {
-  Community,
-} from "lemmy-js-client";
+import { Community } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import "reflect-metadata";
 import communityConfigRepository from "../repository/communityConfigRepository";
-import { CommunityFilterConfig, LogOptions } from "../models/iConfig";
-import CommunityService from "./guildService";
+import {
+  CommunityFilterConfig,
+  CommunityTimedConfig,
+  LogOptions,
+} from "../models/iConfig";
+import CommunityService from "./communityService";
 import communityConfigModel from "../models/communityConfigModel";
 
 @Service()
@@ -45,10 +47,33 @@ class communityConfigService {
   ) {
     const config = await this.getCommunityConfig(community);
     if (!config) throw new Error("Community config not found!");
-    config.filterConfig = [ ...config.filterConfig, ...filterOption ];
+    config.filterConfig = filterOption;
     return await this.repository.save(config);
   }
 
+  async updateTimedPostsOptions(
+    community: Community,
+    timeOption: CommunityTimedConfig[]
+  ) {
+    const config = await this.getCommunityConfig(community);
+    if (!config) throw new Error("Community config not found!");
+    config.timedConfig = timeOption;
+    return await this.repository.save(config);
+  }
+
+  async setExecuteTime(community: Community, timeOptionId: string) {
+    const config = await this.getCommunityConfig(community);
+    if (!config) throw new Error("Community config not found!");
+    const timedConfig = config.timedConfig;
+    const timedConfigIndex = timedConfig.findIndex(
+      (x) => x.id === timeOptionId
+    );
+    if (timedConfigIndex === -1) throw new Error("Community config not found!");
+    timedConfig[timedConfigIndex].lastExecutionTimestamp = new Date().getTime();
+
+    config.timedConfig = timedConfig;
+    return await this.repository.save(config);
+  }
   async getCommunityConfig(community: Community) {
     return await this.repository.findOne({
       where: { "community.id": { $eq: community.id } },

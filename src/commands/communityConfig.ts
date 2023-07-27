@@ -11,7 +11,7 @@ import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
 import verifiedUserService from "../services/verifiedUserService";
 import { Inject } from "typedi";
 import communityConfigService from "../services/communityConfigService";
-import CommunityService from "../services/guildService";
+import CommunityService from "../services/communityService";
 import {
   Pagination,
   PaginationItem,
@@ -96,9 +96,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -115,6 +115,8 @@ export default class CommunityConfigCommands {
         return;
       }
       await this.communityConfigService.removeCommunityConfig(config);
+      console.log("REMOVING")
+      console.log(config)
       await interaction.editReply(`Removed ${communityName} from the bot!`);
     } catch (exc) {
       console.log(exc);
@@ -192,9 +194,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -202,7 +204,7 @@ export default class CommunityConfigCommands {
         );
         return;
       }
-      
+
       const config = await this.communityConfigService.getCommunityConfig(
         community.community_view.community
       );
@@ -360,9 +362,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -491,9 +493,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -614,9 +616,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -711,9 +713,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -787,9 +789,9 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !this.verifiedUserService.isModeratorOf(
+        !await this.verifiedUserService.isModeratorOf(
           interaction.user,
-          community.moderators
+          community.community_view.community.id
         )
       ) {
         await interaction.editReply(
@@ -912,6 +914,19 @@ export default class CommunityConfigCommands {
         await interaction.editReply("Community not found!");
         return;
       }
+
+      if (
+        !await this.verifiedUserService.isModeratorOf(
+          interaction.user,
+          community.community_view.community.id
+        )
+      ) {
+        await interaction.editReply(
+          "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+        );
+        return;
+      }
+
       const config = await this.communityConfigService.getCommunityConfig(
         community.community_view.community
       );

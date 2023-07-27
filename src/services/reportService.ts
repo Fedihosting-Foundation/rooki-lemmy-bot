@@ -9,7 +9,7 @@ import commentReportViewRepository from "../repository/commentReportViewReposito
 import postReportViewRepository from "../repository/postReportViewRepository";
 import postReportViewModel from "../models/postReportViewModel";
 import commentReportViewModel from "../models/commentReportViewModel";
-import CommunityService from "./guildService";
+import CommunityService from "./communityService";
 import communityConfigService from "./communityConfigService";
 
 @Service()
@@ -114,25 +114,17 @@ class reportService extends baseService<
       try {
         const postResult = await client.listPostReports({
           auth: getAuth(),
-          community_id: (
-            await this.CommunityService.getCommunity({
-              name: community.community.name,
-            })
-          ).community_view.community.id,
+          community_id: community.community.id
         });
         console.log("Fetched Post Reports");
         this.push(...postResult.post_reports);
         postReports.push(...postResult.post_reports);
-        await sleep(1000);
+        await sleep(2000);
         const commentResult = await client.listCommentReports({
           auth: getAuth(),
-          community_id: (
-            await this.CommunityService.getCommunity({
-              name: community.community.name,
-            })
-          ).community_view.community.id,
+          community_id: community.community.id
         });
-        console.log("Fetched Post Reports");
+        console.log("Fetched Comment Reports");
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);
       } catch (e) {

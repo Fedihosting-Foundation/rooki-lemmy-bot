@@ -258,11 +258,11 @@ const checkText = (
   const found = words.findIndex((word) => {
     let regex: RegExp | string = word;
     try {
-      regex = new RegExp(word, "gim");
+      regex = new RegExp(word, "im");
     } catch (e) {
       console.log(e);
     }
-    if (filterText.find((x) => x.match(regex))) {
+    if (filterText.find((x) => x.match(regex) || x.includes(word))) {
       return true;
     }
   });

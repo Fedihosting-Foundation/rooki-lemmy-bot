@@ -34,9 +34,10 @@ const getActionForComment = (comment: CommentView) => {
     )
     .setStyle(ButtonStyle.Danger);
 
-  const refreshButton = new ButtonBuilder().setCustomId(
-    `refresh_comment_${comment.comment.id}`
-  ).setStyle(ButtonStyle.Secondary).setEmoji("🔄");
+  const refreshButton = new ButtonBuilder()
+    .setCustomId(`refresh_comment_${comment.comment.id}`)
+    .setStyle(ButtonStyle.Secondary)
+    .setEmoji("🔄");
   row.addComponents(removeButton, banButton, refreshButton);
 
   return row;
@@ -59,9 +60,10 @@ const getActionForPost = (post: PostView) => {
     .setLabel(`${!post.creator_banned_from_community ? "Ban" : "Unban"} User`)
     .setStyle(ButtonStyle.Danger);
 
-  const refreshButton = new ButtonBuilder().setCustomId(
-    `refresh_post_${post.post.id}`
-  ).setStyle(ButtonStyle.Secondary).setEmoji("🔄");
+  const refreshButton = new ButtonBuilder()
+    .setCustomId(`refresh_post_${post.post.id}`)
+    .setStyle(ButtonStyle.Secondary)
+    .setEmoji("🔄");
   row.addComponents(removeButton, banButton, refreshButton);
 
   return row;
@@ -72,7 +74,9 @@ const getActionForPostReport = (post: PostReportView) => {
 
   const resolveButton = new ButtonBuilder()
     .setCustomId(
-      `resolve_postreport_${!post.post_report.resolved}_${post.post_report.id}`
+      `resolve_postreport_${!post.post_report.resolved}_${
+        post.post_report.id
+      }_${post.community.id}`
     )
     .setLabel(
       `${!post.post_report.resolved ? "Resolve" : "Unresolve"} Post Report`
@@ -90,7 +94,7 @@ const getActionForCommentReport = (comment: CommentReportView) => {
     .setCustomId(
       `resolve_commentreport_${!comment.comment_report.resolved}_${
         comment.comment_report.id
-      }`
+      }_${comment.community.id}`
     )
     .setLabel(
       `${
@@ -113,11 +117,11 @@ export {
 
 class LogHandler {
   @LemmyOn({ event: "postcreated" })
-  async handlePost(postData: postViewModel, communityConfig: communityConfigModel) {
-    if (
-      !communityConfig.logConfig.discord.posts.enabled
-    )
-      return;
+  async handlePost(
+    postData: postViewModel,
+    communityConfig: communityConfigModel
+  ) {
+    if (!communityConfig.logConfig.discord.posts.enabled) return;
     logService.Log(
       {
         content: "Post created!",
@@ -138,10 +142,7 @@ class LogHandler {
     commentData: commentViewModel,
     communityConfig: communityConfigModel
   ) {
-    if (
-      !communityConfig.logConfig.discord.comments.enabled
-    )
-      return;
+    if (!communityConfig.logConfig.discord.comments.enabled) return;
     logService.Log(
       {
         content: "Comment created!",
@@ -162,10 +163,7 @@ class LogHandler {
     reportView: CommentReportView,
     communityConfig: communityConfigModel
   ) {
-    if (
-      !communityConfig.logConfig.discord.reports.enabled
-    )
-      return;
+    if (!communityConfig.logConfig.discord.reports.enabled) return;
     await logService.Log(
       {
         content: "New Comment Report!",
@@ -187,10 +185,7 @@ class LogHandler {
     reportView: PostReportView,
     communityConfig: communityConfigModel
   ) {
-    if (
-      !communityConfig.logConfig.discord.reports.enabled
-    )
-      return;
+    if (!communityConfig.logConfig.discord.reports.enabled) return;
     await logService.Log(
       {
         content: "New Post Report!",

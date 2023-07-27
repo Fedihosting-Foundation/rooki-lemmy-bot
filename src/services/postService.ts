@@ -7,7 +7,7 @@ import baseService from "./baseService";
 import client, { getAuth } from "../main";
 import { sleep } from "../helpers/lemmyHelper";
 import emitEvent from "../helpers/eventHelper";
-import CommunityService from "./guildService";
+import CommunityService from "./communityService";
 import communityConfigService from "./communityConfigService";
 
 @Service()
@@ -64,12 +64,10 @@ class postService extends baseService<PostView, postViewModel> {
 
   async fetchAndUpdate() {
     const posts: PostView[] = [];
-    for (const community of await this.CommunityConfigService.getCommunities()) {
+    for (const community of ( await this.CommunityConfigService.getCommunities())) {
       try {
         const result = await client.getPosts({
-          community_id: (
-            await this.CommunityService.getCommunity({ name: community.community.name })
-          ).community_view.community.id,
+          community_id: community.community.id,
           auth: getAuth(),
           sort: "New",
           type_: "Local",

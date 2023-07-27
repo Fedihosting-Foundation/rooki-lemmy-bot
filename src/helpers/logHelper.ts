@@ -9,6 +9,7 @@ import {
   CommentReportView,
   Comment,
   PersonView,
+  PersonAggregates,
 } from "lemmy-js-client";
 import { instanceUrl } from "./lemmyHelper";
 
@@ -209,7 +210,7 @@ export default class LogHelper {
     return [embed, commentEmbed];
   }
 
-  static userToEmbed({ counts, person }: PersonView) {
+  static userToEmbed({ counts, person }: {counts?: PersonAggregates, person: Person }) {
     const embed = new EmbedBuilder()
       .setTitle("Person Detail")
       .setDescription(person.bio || "**User has no Bio**")
@@ -220,6 +221,15 @@ export default class LogHelper {
       .setTimestamp(new Date(person.published + "Z"))
       .addFields([
         { name: "ID", value: String(person.id), inline: true },
+        { name: "Admin", value: person.admin ? "Yes" : "No", inline: true },
+              ])
+      .setURL(`${instanceUrl}/u/${person.name}`)
+      .setFooter({
+        text: `User`,
+      });
+
+    if (counts) {
+      embed.addFields([
         { name: "Posts", value: String(counts.post_count), inline: true },
         { name: "Comments", value: String(counts.comment_count), inline: true },
         {
@@ -228,11 +238,8 @@ export default class LogHelper {
           inline: true,
         },
         { name: "Post Score", value: String(counts.post_score), inline: true },
-      ])
-      .setURL(`${instanceUrl}/u/${person.name}`)
-      .setFooter({
-        text: `User`,
-      });
+      ]);
+    }
 
     return embed;
   }

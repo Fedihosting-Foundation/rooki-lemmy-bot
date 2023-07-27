@@ -17,7 +17,7 @@ export default class VerifyCommands {
   @Inject()
   verifiedUserService: verifiedUserService;
   @Slash({ description: "Verify a lemmy account", name: "verify" })
-  async fetchComment(
+  async verify(
     @SlashOption({
       description:
         "The user account ID ( the /u/--THISPART-- in your profile URL )",
@@ -140,6 +140,21 @@ This message is automated! Please dont reply to this message!`,
           });
         }
       });
+    } catch (exc) {
+      console.log(exc);
+      interaction.editReply("Something went wrong ( User not found? )");
+    }
+  }
+
+  @Slash({ description: "Unverify yourself", name: "unverify" })
+  async unverify(
+    interaction: CommandInteraction
+  ) {
+    await interaction.deferReply();
+ 
+    try {
+       await this.verifiedUserService.removeConnection(undefined, undefined, interaction.user);
+        await interaction.editReply("You are now unverified!");
     } catch (exc) {
       console.log(exc);
       interaction.editReply("Something went wrong ( User not found? )");
