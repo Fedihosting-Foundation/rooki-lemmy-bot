@@ -56,7 +56,7 @@ class commentService extends baseService<
           const result = await this.repository.save(createdComment);
           emitEvent("commentcreated", { data: result, config: config });
 
-          console.log("Handled Comment", comment.post.id);
+          console.log("Handled Comment", comment.comment.id);
 
           cb(null, result);
         } catch (e) {

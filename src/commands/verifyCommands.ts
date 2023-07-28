@@ -34,7 +34,9 @@ export default class VerifyCommands {
     code: string | undefined,
     interaction: CommandInteraction
   ) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply(
+      { ephemeral: true}
+    );
     if (code) {
       const verified = this.verifiedUserService.verifyCode(parseInt(code));
       if (verified.length === 0) {
