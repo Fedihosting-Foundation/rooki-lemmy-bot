@@ -34,7 +34,7 @@ export default class VerifyCommands {
     code: string | undefined,
     interaction: CommandInteraction
   ) {
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     if (code) {
       const verified = this.verifiedUserService.verifyCode(parseInt(code));
       if (verified.length === 0) {
@@ -147,14 +147,16 @@ This message is automated! Please dont reply to this message!`,
   }
 
   @Slash({ description: "Unverify yourself", name: "unverify" })
-  async unverify(
-    interaction: CommandInteraction
-  ) {
+  async unverify(interaction: CommandInteraction) {
     await interaction.deferReply();
- 
+
     try {
-       await this.verifiedUserService.removeConnection(undefined, undefined, interaction.user);
-        await interaction.editReply("You are now unverified!");
+      await this.verifiedUserService.removeConnection(
+        undefined,
+        undefined,
+        interaction.user
+      );
+      await interaction.editReply("You are now unverified!");
     } catch (exc) {
       console.log(exc);
       interaction.editReply("Something went wrong ( User not found? )");
