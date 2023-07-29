@@ -17,6 +17,10 @@ DIService.engine = typeDiDependencyRegistryEngine
 process.on("uncaughtException", (error) => {
   console.log("uncaught error:");
   console.log(error);
+
+  setTimeout(() => {
+    process.exit(1);
+  }, 5000);
 });
 
 export const bot = new Client({
@@ -61,7 +65,11 @@ bot.on("messageCreate", (message: Message) => {
   bot.executeCommand(message);
 });
 
-const client: LemmyHttp = new LemmyHttp(instanceUrl);
+const client: LemmyHttp = new LemmyHttp(instanceUrl, {
+  headers:{
+    "User-Agent": "rooki-bot",
+  }
+});
 let jwt: string;
 
 export function getAuth() {

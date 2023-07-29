@@ -36,7 +36,7 @@ const ExpandMore = styled((props: ExpandMoreProps) => {
   }),
 }));
 
-export const Post = (props: { data: IModQueueEntry, sx: SxProps }) => {
+export const Post = (props: { data: IModQueueEntry, sx?: SxProps }) => {
   const [expanded, setExpanded] = React.useState(false);
 
   const handleExpandClick = () => {
