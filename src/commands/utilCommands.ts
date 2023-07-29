@@ -35,7 +35,7 @@ export default class UtilCommands {
       user.user
     );
     if (!verifiedUser) {
-      await interaction.reply("User not found!");
+      await interaction.editReply("User not found!");
       return;
     }
     const embed = LogHelper.userToEmbed({ person: verifiedUser.lemmyUser });

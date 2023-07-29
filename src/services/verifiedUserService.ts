@@ -35,17 +35,6 @@ class verifiedUserService {
           );
 
           if (!lemmyUser) {
-            await this.repository.delete(user);
-            return;
-          }
-
-          if (user.discordUser.username !== discordUser.username) {
-            await this.repository.delete(user);
-            return;
-          }
-
-          if (user.lemmyUser.name !== lemmyUser.person_view.person.name) {
-            await this.repository.delete(user);
             return;
           }
 
