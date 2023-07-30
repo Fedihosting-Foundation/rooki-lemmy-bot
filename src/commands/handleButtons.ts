@@ -568,4 +568,189 @@ export default class LogCommands {
       );
     }
   }
+  @ButtonComponent({ id: /remove_postreport_(true|false)_(.*)/ })
+  async removePostReportButton(initialInteraction: ButtonInteraction) {
+    const args = initialInteraction.customId.split("_");
+    const removed = args[2] === "true";
+    const resolved = true;
+
+    try {
+      try {
+        const oldPost = await client.getPost({
+          auth: getAuth(),
+          id: parseInt(args[3]),
+        });
+
+        if (
+          !await this.verifiedUserService.isModeratorOf(
+            initialInteraction.user,
+            oldPost.post_view.community.id
+          )
+        ) {
+          await initialInteraction.editReply(
+            "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+          );
+          return;
+        }
+      } catch (e) {
+        await initialInteraction.reply({
+          content: "**Comment not found!**",
+          ephemeral: true,
+        });
+        return;
+      }
+
+      const modal = new ModalBuilder()
+        .setCustomId("remove_post_modal")
+        .setTitle(`${removed ? "Remove" : "Restore"} Post`);
+
+      const reason = new TextInputBuilder()
+        .setCustomId("reason")
+        .setLabel("Reason:")
+        .setRequired(true)
+        .setStyle(TextInputStyle.Short);
+      const firstRow =
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          reason
+        );
+      modal.addComponents(firstRow);
+
+      const collectorFilter = (i: ModalSubmitInteraction) => {
+        i.deferUpdate();
+        return i.user.id === initialInteraction.user.id;
+      };
+      await initialInteraction.showModal(modal);
+      const interaction = await initialInteraction.awaitModalSubmit({
+        time: 120000,
+        filter: collectorFilter,
+      });
+
+      const result = ["reason"].map((key) =>
+        interaction.fields.getTextInputValue(key)
+      );
+
+      const post = await client.removePost({
+        auth: getAuth(),
+        post_id: parseInt(args[3]),
+        removed: removed,
+        reason: `${
+          removed ? "Removed" : "Restored"
+        } by ${interaction.user.toString()} with the reason: ${result[0]}`,
+      });
+
+      const resoPost = await client.resolvePostReport({
+        auth: getAuth(),
+        report_id: parseInt(args[4]),
+        resolved: resolved,
+      });
+
+      await initialInteraction.message.edit({
+        content: `Post was ${
+          removed ? "removed" : "restored"
+        } by ${interaction.user.toString()}!`,
+        components: [getActionForPost(post.post_view)],
+      });
+      await interaction.editReply({
+        content: `Post ${removed ? "removed" : "restored"}!`,
+      });
+    } catch (exc) {
+      console.log(exc);
+      initialInteraction.channel?.send(
+        `Something went wrong ${initialInteraction.user.toString()}!`
+      );
+    }
+  }
+  @ButtonComponent({ id: /remove_commentreport_(true|false)_(.*)/ })
+  async removeCommentReportButton(initialInteraction: ButtonInteraction) {  
+    const args = initialInteraction.customId.split("_");
+    const removed = args[2] === "true";
+    const resolved = true;
+
+    try {
+      try {
+        const oldComment = await client.getComment({
+          auth: getAuth(),
+          id: parseInt(args[3]),
+        });
+
+        if (
+          !await this.verifiedUserService.isModeratorOf(
+            initialInteraction.user,
+            oldComment.comment_view.community.id
+          )
+        ) {
+          await initialInteraction.editReply(
+            "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+          );
+          return;
+        }
+      } catch (e) {
+        await initialInteraction.reply({
+          content: "**Comment not found!**",
+        });
+        return;
+      }
+
+      const modal = new ModalBuilder()
+        .setCustomId("remove_comment_modal")
+        .setTitle(`${removed ? "Remove" : "Restore"} Comment`);
+
+      const reason = new TextInputBuilder()
+        .setCustomId("reason")
+        .setLabel("Reason:")
+        .setRequired(true)
+        .setStyle(TextInputStyle.Short);
+      const firstRow =
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          reason
+        );
+      modal.addComponents(firstRow);
+
+      const collectorFilter = (i: ModalSubmitInteraction) => {
+        i.deferUpdate();
+        return i.user.id === initialInteraction.user.id;
+      };
+
+      await initialInteraction.showModal(modal);
+      const interaction = await initialInteraction.awaitModalSubmit({
+        time: 120000,
+        filter: collectorFilter,
+      });
+
+      const result = ["reason"].map((key) =>
+        interaction.fields.getTextInputValue(key)
+      );
+
+      const post = await client.removeComment({
+        auth: getAuth(),
+        comment_id: parseInt(args[3]),
+        removed: removed,
+        reason: `${
+          removed ? "Removed" : "Restored"
+        } by ${interaction.user.toString()} with the reason: ${result[0]}`,
+      });
+
+      const resoComment = await client.resolveCommentReport({
+        auth: getAuth(),
+        report_id: parseInt(args[4]),
+        resolved: resolved,
+      });
+
+      await initialInteraction.message.edit({
+        content: `Comment was ${
+          removed ? "removed" : "restored"
+        } by ${interaction.user.toString()}!`,
+      });
+
+      await interaction.editReply({
+        content: `Comment ${removed ? "removed" : "restored"}!`,
+      });
+
+    } catch (exc) {
+      console.log(exc);
+      initialInteraction.channel?.send(
+        `Something went wrong ${initialInteraction.user.toString()}!`
+      );
+    }
+  }
 }
