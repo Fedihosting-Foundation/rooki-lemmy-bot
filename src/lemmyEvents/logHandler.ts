@@ -28,7 +28,7 @@ const getActionForComment = (comment: CommentView) => {
     .setStyle(ButtonStyle.Primary);
   const banButton = new ButtonBuilder()
     .setCustomId(
-      `ban_user_${!comment.creator_banned_from_community}_${
+      `ban_user_${!comment.creator_banned_from_community}_true_${comment.comment.id}_${comment.creator.id}_${
         comment.community.id
       }`
     )
@@ -56,7 +56,7 @@ const getActionForPost = (post: PostView) => {
 
   const banButton = new ButtonBuilder()
     .setCustomId(
-      `ban_user_${!post.creator_banned_from_community}_${post.community.id}_${
+      `ban_user_${!post.creator_banned_from_community}_false_${post.post.id}_${post.community.id}_${
         post.creator.id
       }`
     )
@@ -78,11 +78,11 @@ const getActionForPostReport = (post: PostReportView) => {
   const removeButton = new ButtonBuilder()
     .setCustomId(`remove_postreport_${!post.post.removed}_${post.post.id}_${post.post_report.id}`)
     .setLabel(`${!post.post.removed ? "Remove" : "Restore"} Post`)
-    .setStyle(ButtonStyle.Primary);
+    .setStyle(ButtonStyle.Danger);
 
   const banButton = new ButtonBuilder()
     .setCustomId(
-      `ban_user_${!post.creator_banned_from_community}_${post.community.id}_${
+      `ban_user_${!post.creator_banned_from_community}_false_${post.post.id}_${post.community.id}_${
         post.creator.id
       }`
     )
@@ -98,7 +98,7 @@ const getActionForPostReport = (post: PostReportView) => {
     .setLabel(
       `${!post.post_report.resolved ? "Resolve" : "Unresolve"} Post Report`
     )
-    .setStyle(ButtonStyle.Danger);
+    .setStyle(ButtonStyle.Primary);
 
   row.addComponents(removeButton, banButton, resolveButton);
 
@@ -116,7 +116,7 @@ const getActionForCommentReport = (comment: CommentReportView) => {
 
   const banButton = new ButtonBuilder()
     .setCustomId(
-      `ban_user_${!comment.creator_banned_from_community}_${
+      `ban_user_${!comment.creator_banned_from_community}_true_${comment.comment.id}_${comment.creator.id}_${
         comment.community.id
       }`
     )

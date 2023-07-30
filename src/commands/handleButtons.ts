@@ -63,10 +63,10 @@ export default class LogCommands {
         return;
       }
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           initialInteraction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await initialInteraction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -110,11 +110,14 @@ export default class LogCommands {
       });
     }
   }
-  @ButtonComponent({ id: /ban_user_(true|false)_([^_]*)_(.*)/ })
+  @ButtonComponent({
+    id: /ban_user_(true|false)_(true|false)_([^_]*)_([^_]*)_(.*)/,
+  })
   async banUserButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
+    const communityId = Number(args[args.length - 1]);
     const community = await this.communityService.getCommunity({
-      id: Number(args[args.length - 1]),
+      id: communityId,
     });
     if (!community) {
       await initialInteraction.reply({
@@ -125,10 +128,10 @@ export default class LogCommands {
     }
 
     if (
-      !await this.verifiedUserService.isModeratorOf(
+      !(await this.verifiedUserService.isModeratorOf(
         initialInteraction.user,
         community.community_view.community.id
-      )
+      ))
     ) {
       await initialInteraction.editReply(
         "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -136,21 +139,9 @@ export default class LogCommands {
       return;
     }
 
-    const config = await this.communityConfigService.getCommunityConfig(
-      community.community_view.community
-    );
-
     const banned = args[2] === "true";
-
-    // #TODO: Add check if he is verified and if he is a mod of the community
-    // if (!config.discordTeam?.includes(initialInteraction.user.id)) {
-    //   await initialInteraction.reply({
-    //     content:
-    //       "**You are not allowed to do this!** (Contact the owner of the Bot!)",
-    //     ephemeral: true,
-    //   });
-    //   return;
-    // }
+    const comment = args[3] === "true";
+    const dataId = Number(args[args.length - 3]);
     try {
       const modal = new ModalBuilder()
         .setCustomId("remove_comment_modal")
@@ -189,10 +180,10 @@ export default class LogCommands {
         interaction.fields.getTextInputValue(key)
       );
 
-      const post = await client.banFromCommunity({
+      const banResult = await client.banFromCommunity({
         auth: getAuth(),
         ban: banned,
-        community_id: Number(args[args.length - 1]),
+        community_id: communityId,
         person_id: Number(args[args.length - 2]),
         remove_data: result[1] === "y",
         reason: `${
@@ -205,19 +196,17 @@ export default class LogCommands {
           banned ? "banned" : "unbanned"
         } by ${interaction.user.toString()}!`,
         components: [
-          new ActionRowBuilder<ButtonBuilder>().addComponents(
-            ...initialInteraction.message?.components[0].components
-              .filter((x) => !x.customId?.includes("ban_user_"))
-              .map((x) => new ButtonBuilder(x as ButtonComponentData)),
-            new ButtonBuilder()
-              .setCustomId(
-                `ban_user_${!banned}_${args[args.length - 2]}_${
-                  args[args.length - 1]
-                }`
+          comment
+            ? getActionForComment(
+                (
+                  await client.getComment({ auth: getAuth(), id: dataId })
+                ).comment_view
               )
-              .setLabel(`${banned ? "Ban" : "Unban"} ${args[args.length - 2]}`)
-              .setStyle(ButtonStyle.Danger)
-          ),
+            : getActionForPost(
+                (
+                  await client.getPost({ auth: getAuth(), id: dataId })
+                ).post_view
+              ),
         ],
       });
       await interaction.editReply({
@@ -243,10 +232,10 @@ export default class LogCommands {
         });
 
         if (
-          !await this.verifiedUserService.isModeratorOf(
+          !(await this.verifiedUserService.isModeratorOf(
             initialInteraction.user,
             oldComment.comment_view.community.id
-          )
+          ))
         ) {
           await initialInteraction.editReply(
             "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -338,10 +327,10 @@ export default class LogCommands {
         });
 
         if (
-          !await this.verifiedUserService.isModeratorOf(
+          !(await this.verifiedUserService.isModeratorOf(
             initialInteraction.user,
             oldPost.post_view.community.id
-          )
+          ))
         ) {
           await initialInteraction.editReply(
             "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -418,10 +407,10 @@ export default class LogCommands {
     try {
       try {
         if (
-          !await this.verifiedUserService.isModeratorOf(
+          !(await this.verifiedUserService.isModeratorOf(
             initialInteraction.user,
             Number(args[4])
-          )
+          ))
         ) {
           await initialInteraction.editReply(
             "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -497,10 +486,10 @@ export default class LogCommands {
     try {
       try {
         if (
-          !await this.verifiedUserService.isModeratorOf(
+          !(await this.verifiedUserService.isModeratorOf(
             initialInteraction.user,
             Number(args[4])
-          )
+          ))
         ) {
           await initialInteraction.editReply(
             "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -582,10 +571,10 @@ export default class LogCommands {
         });
 
         if (
-          !await this.verifiedUserService.isModeratorOf(
+          !(await this.verifiedUserService.isModeratorOf(
             initialInteraction.user,
             oldPost.post_view.community.id
-          )
+          ))
         ) {
           await initialInteraction.editReply(
             "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -661,7 +650,7 @@ export default class LogCommands {
     }
   }
   @ButtonComponent({ id: /remove_commentreport_(true|false)_(.*)/ })
-  async removeCommentReportButton(initialInteraction: ButtonInteraction) {  
+  async removeCommentReportButton(initialInteraction: ButtonInteraction) {
     const args = initialInteraction.customId.split("_");
     const removed = args[2] === "true";
     const resolved = true;
@@ -674,10 +663,10 @@ export default class LogCommands {
         });
 
         if (
-          !await this.verifiedUserService.isModeratorOf(
+          !(await this.verifiedUserService.isModeratorOf(
             initialInteraction.user,
             oldComment.comment_view.community.id
-          )
+          ))
         ) {
           await initialInteraction.editReply(
             "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -745,7 +734,6 @@ export default class LogCommands {
       await interaction.editReply({
         content: `Comment ${removed ? "removed" : "restored"}!`,
       });
-
     } catch (exc) {
       console.log(exc);
       initialInteraction.channel?.send(
