@@ -19,8 +19,8 @@ export default class FilterHandler {
       console.log("Checking for match!");
       console.log(x);
       const found = checkText(x.words, [
-        postData.post.body.replace(/\*/g, '') || "",
-        postData.post.name.replace(/\*/g, ''),
+        postData.post.body || "",
+        postData.post.name,
         postData.post.url,
       ]);
       if (found.found) {
