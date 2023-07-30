@@ -38,7 +38,8 @@ class mentionService extends baseService<
           const createdMention = { ...repositoryMention, ...mention };
 
           const result = await this.repository.save(createdMention);
-          emitEvent("personmentioned", result, config);
+          console.log("Saved Mention", result);
+          emitEvent("personmentioned", {data: result, config: config || undefined});
 
           // TODO: Handle Post
           console.log("Handled mention", mention.post.id);

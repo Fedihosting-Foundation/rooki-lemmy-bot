@@ -49,7 +49,7 @@ class reportService extends baseService<
                 foundCommentReport.comment_report.resolved !==
                 data.comment_report.resolved
               ) {
-                emitEvent("commentreportupdated", foundCommentReport, config);
+                emitEvent("commentreportupdated", {data: foundCommentReport, config: config});
               }
               cb(null, foundCommentReport);
               return;
@@ -64,7 +64,7 @@ class reportService extends baseService<
               createdCommentReport
             );
 
-            emitEvent("commentreportcreated", result, config);
+            emitEvent("commentreportcreated", {data: result, config: config});
             console.log("Handled Post Report", data.post.id);
             cb(null, result);
             return;
@@ -79,7 +79,7 @@ class reportService extends baseService<
                 data.post_report.resolved !==
                 foundPostReport.post_report.resolved
               ) {
-                emitEvent("postreportupdated", foundPostReport, config);
+                emitEvent("postreportupdated", {data: foundPostReport, config: config});
               }
               cb(null, result);
               return;
@@ -91,7 +91,7 @@ class reportService extends baseService<
             };
 
             const result = await this.postRepository.save(createdPostReport);
-            emitEvent("postreportcreated", result, config);
+            emitEvent("postreportcreated", {data: result, config: config});
             console.log("Handled Post Report", data.post.id);
             cb(null, result);
             return;

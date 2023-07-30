@@ -115,8 +115,6 @@ export default class CommunityConfigCommands {
         return;
       }
       await this.communityConfigService.removeCommunityConfig(config);
-      console.log("REMOVING")
-      console.log(config)
       await interaction.editReply(`Removed ${communityName} from the bot!`);
     } catch (exc) {
       console.log(exc);

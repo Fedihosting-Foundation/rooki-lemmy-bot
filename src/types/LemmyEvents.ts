@@ -23,11 +23,12 @@ export type ILemmyCommand = {
     usage?: string;
     example?: string;
     communities?: (string|number)[];
+    modOnly?: boolean;
 }
 
 export type LemmyEventArguments<T> = {
   data: T;
-  config : communityConfigModel;
+  config?: communityConfigModel;
 }
 
 export type LemmyCommandArguments = {

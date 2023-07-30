@@ -18,11 +18,12 @@
     "discord.js": "^14.11.0",
     "discordx": "^11.7.6",
     "dotenv": "^16.3.1",
-    "lemmy-js-client": "^0.18.1",
+    "lemmy-js-client": "^0.18.3-rc.3",
     "mongodb": "^5.6.0",
     "node-cron": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "semver": ">=7.5.2",
+    "set-interval-async": "^3.0.3",
     "typedi": "^0.10.0",
     "typeorm": "^0.3.17"
   },

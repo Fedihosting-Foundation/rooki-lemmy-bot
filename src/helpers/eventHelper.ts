@@ -1,8 +1,8 @@
 import { getEvent } from "../decorators/lemmyPost";
-import { LemmyEvents } from "../types/LemmyEvents";
+import { LemmyEventArguments, LemmyEvents } from "../types/LemmyEvents";
 
-export default function emitEvent(eventName: LemmyEvents, ...data: any) {
+export default function emitEvent<T extends LemmyEvents, G>(eventName: T, args: LemmyEventArguments<G>) {
   console.log("Emitting event", eventName);
 
-  getEvent(eventName).forEach((x) => x.fn(...data));
+  getEvent(eventName).forEach((x) => x.fn(args));
 }

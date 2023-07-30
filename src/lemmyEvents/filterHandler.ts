@@ -1,27 +1,26 @@
 import { LemmyOn } from "../decorators/lemmyPost";
 import commentViewModel from "../models/commentViewModel";
-import communityConfigModel from "../models/communityConfigModel";
 import client, { getAuth } from "../main";
 import LogService from "../services/logService";
 import LogHelper from "../helpers/logHelper";
 import { getActionForComment, getActionForPost } from "./logHandler";
 import postViewModel from "../models/postViewModel";
+import { LemmyEventArguments } from "../types/LemmyEvents";
 
 export default class FilterHandler {
   @LemmyOn({ event: "postcreated" })
   async checkFilteredPosts(
-    postData: postViewModel,
-    config: communityConfigModel
+    event: LemmyEventArguments<postViewModel>
   ) {
-    const filtered = config.filterConfig.filter((x) => x.posts && x.enabled);
+    const filtered = event.config?.filterConfig.filter((x) => x.posts && x.enabled);
     if (!filtered || filtered.length === 0) return;
     filtered.forEach(async (x) => {
       console.log("Checking for match!");
       console.log(x);
       const found = checkText(x.words, [
-        postData.post.body || "",
-        postData.post.name,
-        postData.post.url,
+        event.data.post.body || "",
+        event.data.post.name,
+        event.data.post.url,
       ]);
       if (found.found) {
         console.log("Found a match!");
@@ -30,94 +29,94 @@ export default class FilterHandler {
           case "ban":
             await client.banFromCommunity({
               auth: getAuth(),
-              community_id: postData.community.id,
-              person_id: postData.post.creator_id,
+              community_id: event.data.community.id,
+              person_id: event.data.post.creator_id,
               ban: true,
               reason: `Found a filtered word: '${found.value}' !`,
             });
             setTimeout(async () => {
               await client.removeComment({
                 auth: getAuth(),
-                comment_id: postData.post.id,
+                comment_id: event.data.post.id,
                 removed: true,
                 reason: `Found a filtered word: '${found.value}' !`,
               });
             }, 5000);
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
-                  embeds: [LogHelper.postToEmbed(postData)],
-                  components: [getActionForPost(postData)],
+                  embeds: [LogHelper.postToEmbed(event.data)],
+                  components: [getActionForPost(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config?.logConfig.discord.filterlog?.channel ||
+                    event.config?.logConfig.discord.logChannel,
+                  guild: event.config?.logConfig.discord.logGuild,
+                  options: event.config?.logConfig.discord.filterlog,
                 }
               );
             break;
           case "remove":
             await client.removePost({
               auth: getAuth(),
-              post_id: postData.post.id,
+              post_id: event.data.post.id,
               removed: true,
               reason: `Found a filtered word: '${found.value}' !`,
             });
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
-                  embeds: [LogHelper.postToEmbed(postData)],
-                  components: [getActionForPost(postData)],
+                  embeds: [LogHelper.postToEmbed(event.data)],
+                  components: [getActionForPost(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config?.logConfig.discord.filterlog?.channel ||
+                    event.config?.logConfig.discord.logChannel,
+                  guild: event.config?.logConfig.discord.logGuild,
+                  options: event.config?.logConfig.discord.filterlog,
                 }
               );
             break;
           case "report":
             await client.createPostReport({
               auth: getAuth(),
-              post_id: postData.post.id,
+              post_id: event.data.post.id,
               reason: `Found a filtered word: '${found.value}' !`,
             });
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
-                  embeds: [LogHelper.postToEmbed(postData)],
-                  components: [getActionForPost(postData)],
+                  embeds: [LogHelper.postToEmbed(event.data)],
+                  components: [getActionForPost(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config?.logConfig.discord.filterlog?.channel ||
+                    event.config?.logConfig.discord.logChannel,
+                  guild: event.config?.logConfig.discord.logGuild,
+                  options: event.config?.logConfig.discord.filterlog,
                 }
               );
           case "log":
           default:
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
-                  embeds: [LogHelper.postToEmbed(postData)],
-                  components: [getActionForPost(postData)],
+                  embeds: [LogHelper.postToEmbed(event.data)],
+                  components: [getActionForPost(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config?.logConfig.discord.filterlog?.channel ||
+                    event.config?.logConfig.discord.logChannel,
+                  guild: event.config?.logConfig.discord.logGuild,
+                  options: event.config?.logConfig.discord.filterlog,
                 }
               );
             break;
@@ -128,15 +127,15 @@ export default class FilterHandler {
 
   @LemmyOn({ event: "commentcreated" })
   async checkFilteredComments(
-    commentData: commentViewModel,
-    config: communityConfigModel
+    event: LemmyEventArguments<commentViewModel>
+
   ) {
-    const filtered = config.filterConfig.filter((x) => x.comments && x.enabled);
+    const filtered = event.config?.filterConfig.filter((x) => x.comments && x.enabled);
     if (!filtered || filtered.length === 0) return;
     filtered.forEach(async (x) => {
       console.log("Checking for match!");
       console.log(x);
-      const found = checkText(x.words, [commentData.comment.content]);
+      const found = checkText(x.words, [event.data.comment.content]);
       if (found.found) {
         console.log("Found a match!");
         console.log(found);
@@ -144,95 +143,95 @@ export default class FilterHandler {
           case "ban":
             await client.banFromCommunity({
               auth: getAuth(),
-              community_id: commentData.community.id,
-              person_id: commentData.comment.creator_id,
+              community_id: event.data.community.id,
+              person_id: event.data.comment.creator_id,
               ban: true,
               reason: `Found a filtered word: '${found.value}' !`,
             });
             setTimeout(async () => {
               await client.removeComment({
                 auth: getAuth(),
-                comment_id: commentData.comment.id,
+                comment_id: event.data.comment.id,
                 removed: true,
                 reason: `Found a filtered word: '${found.value}' !`,
               });
             }, 5000);
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
-                  content: `Found a Match for ${x.id} in ${commentData.comment.content}! Action: ${x.action}`,
-                  embeds: [LogHelper.commentToEmbed(commentData)],
-                  components: [getActionForComment(commentData)],
+                  content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
+                  embeds: [LogHelper.commentToEmbed(event.data)],
+                  components: [getActionForComment(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config.logConfig.discord.filterlog?.channel ||
+                    event.config.logConfig.discord.logChannel,
+                  guild: event.config.logConfig.discord.logGuild,
+                  options: event.config.logConfig.discord.filterlog,
                 }
               );
             break;
           case "remove":
             await client.removeComment({
               auth: getAuth(),
-              comment_id: commentData.comment.id,
+              comment_id: event.data.comment.id,
               removed: true,
               reason: `Found a filtered word: '${found.value}' !`,
             });
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
-                  content: `Found a Match for ${x.id} in ${commentData.comment.content}! Action: ${x.action}`,
-                  embeds: [LogHelper.commentToEmbed(commentData)],
-                  components: [getActionForComment(commentData)],
+                  content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
+                  embeds: [LogHelper.commentToEmbed(event.data)],
+                  components: [getActionForComment(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config.logConfig.discord.filterlog?.channel ||
+                    event.config.logConfig.discord.logChannel,
+                  guild: event.config.logConfig.discord.logGuild,
+                  options: event.config.logConfig.discord.filterlog,
                 }
               );
             break;
           case "report":
             await client.createCommentReport({
               auth: getAuth(),
-              comment_id: commentData.comment.id,
+              comment_id: event.data.comment.id,
               reason: `Found a filtered word: '${found.value}' !`,
             });
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
-                  content: `Found a Match for ${x.id} in ${commentData.comment.content}! Action: ${x.action}`,
-                  embeds: [LogHelper.commentToEmbed(commentData)],
-                  components: [getActionForComment(commentData)],
+                  content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
+                  embeds: [LogHelper.commentToEmbed(event.data)],
+                  components: [getActionForComment(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config?.logConfig.discord.filterlog?.channel ||
+                    event.config?.logConfig.discord.logChannel,
+                  guild: event.config?.logConfig.discord.logGuild,
+                  options: event.config?.logConfig.discord.filterlog,
                 }
               );
             break;
           case "log":
           default:
-            if (config.logConfig.discord.filterlog)
+            if (event.config?.logConfig.discord.filterlog)
               LogService.Log(
                 {
-                  content: `Found a Match for ${x.id} in ${commentData.comment.content}!`,
-                  embeds: [LogHelper.commentToEmbed(commentData)],
-                  components: [getActionForComment(commentData)],
+                  content: `Found a Match for ${x.id} in ${event.data.comment.content}!`,
+                  embeds: [LogHelper.commentToEmbed(event.data)],
+                  components: [getActionForComment(event.data)],
                 },
                 {
                   channel:
-                    config.logConfig.discord.filterlog?.channel ||
-                    config.logConfig.discord.logChannel,
-                  guild: config.logConfig.discord.logGuild,
-                  options: config.logConfig.discord.filterlog,
+                    event.config?.logConfig.discord.filterlog?.channel ||
+                    event.config?.logConfig.discord.logChannel,
+                  guild: event.config?.logConfig.discord.logGuild,
+                  options: event.config?.logConfig.discord.filterlog,
                 }
               );
             break;

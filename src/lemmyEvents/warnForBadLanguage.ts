@@ -7,6 +7,7 @@ import { getActionForComment, getActionForPost } from "./logHandler";
 import badWords from "../badlanguage.json";
 import { AnyThreadChannel, GuildBasedChannel, ThreadChannel } from "discord.js";
 import communityConfigModel from "../models/communityConfigModel";
+import { LemmyEventArguments } from "../types/LemmyEvents";
 
 async function checkForBadLanguage(
   textToFilter: string[],
@@ -90,11 +91,12 @@ async function checkForBadLanguage(
 
 class warnForBadLanguage {
   @LemmyOn({ event: "postcreated" })
-  async checkForBadPost(postData: postViewModel, config: communityConfigModel) {
+  async checkForBadPost(event: LemmyEventArguments<postViewModel>) {
+    if (!event.config) return;
     checkForBadLanguage(
-      [postData.post.body || "", postData.post.name],
-      config,
-      postData
+      [event.data.post.body || "", event.data.post.name],
+      event.config,
+      event.data
     ).catch((x) => {
       console.log(x);
       console.log("Something went wrong CHECKPOST");
@@ -102,14 +104,12 @@ class warnForBadLanguage {
   }
 
   @LemmyOn({ event: "commentcreated" })
-  async checkForBadComment(
-    commentData: commentViewModel,
-    config: communityConfigModel
-  ) {
+  async checkForBadComment(event: LemmyEventArguments<commentViewModel>) {
+    if (!event.config) return;
     checkForBadLanguage(
-      [commentData.comment.content],
-      config,
-      commentData
+      [event.data.comment.content],
+      event.config,
+      event.data
     ).catch((x) => {
       console.log(x);
       console.log("Something went wrong CHECKCOMMENT");

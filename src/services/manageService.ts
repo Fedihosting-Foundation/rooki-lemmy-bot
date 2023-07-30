@@ -5,6 +5,7 @@ import config from "../config";
 import "reflect-metadata";
 import mentionService from "./mentionService";
 import reportService from "./reportService";
+import { setIntervalAsync } from "set-interval-async";
 @Service()
 class manageService {
   @Inject()
@@ -19,7 +20,7 @@ class manageService {
   startTimers() {
     console.log("Starting timers");
 
-    setInterval(async () => {
+    setIntervalAsync(async () => {
       console.log("Fetching Posts");
       try {
         await this.postService.fetchAndUpdate();
@@ -28,7 +29,7 @@ class manageService {
         console.log(x);
       }
     }, config.fetchInterval.posts);
-    setInterval(async () => {
+    setIntervalAsync(async () => {
       console.log("Fetching Comments");
       try {
         await this.commentService.fetchAndUpdate();
@@ -37,7 +38,7 @@ class manageService {
         console.log(x);
       }
     }, config.fetchInterval.comments);
-    setInterval(async () => {
+    setIntervalAsync(async () => {
       console.log("Fetching Mentions");
       try {
         await this.mentionService.fetchAndUpdate();
@@ -46,7 +47,7 @@ class manageService {
         console.log(x);
       }
     }, config.fetchInterval.mentions);
-    setInterval(async () => {
+    setIntervalAsync(async () => {
       console.log("Fetching Reports");
 
       try {

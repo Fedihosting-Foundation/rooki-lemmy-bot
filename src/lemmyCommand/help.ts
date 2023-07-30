@@ -2,6 +2,7 @@ import { LemmyHttp } from "lemmy-js-client";
 import { LemmyCommand, getCommands } from "../decorators/lemmyPost";
 import { getAuth } from "../main";
 import { LemmyCommandArguments } from "../types/LemmyEvents";
+import { isModOfCommunity } from "../helpers/lemmyHelper";
 
 class helpCommand {
   @LemmyCommand({
@@ -12,16 +13,21 @@ class helpCommand {
     },
   })
   async help(client: LemmyHttp, event: LemmyCommandArguments) {
+    const isMod = await isModOfCommunity(
+      event.data.creator,
+      event.data.community
+    );
     const commands = getCommands();
     const helpMessage = commands
       .filter((x) => {
         return (
-          !x.data.community ||
-          x.data.community.some((x) => {
-            return (
-              x === event.data.community.id || x === event.data.community.name
-            );
-          })
+          (!x.data.data.modOnly || isMod) &&
+          (!x.data.community ||
+            x.data.community.some((x) => {
+              return (
+                x === event.data.community.id || x === event.data.community.name
+              );
+            }))
         );
       })
       .map((x) => {

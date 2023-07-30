@@ -35,9 +35,9 @@ class postService extends baseService<PostView, postViewModel> {
             const updatedPost = { ...foundPost, ...post };
             const result = await this.repository.save(updatedPost);
             if (post.post.deleted !== foundPost.post.deleted) {
-              emitEvent("postdeleted", result, config);
+              emitEvent("postdeleted", {data: result, config: config});
             } else if (post.post.updated !== foundPost.post.updated) {
-              emitEvent("postupdated", result, config);
+              emitEvent("postupdated", {data: result, config: config});
             }
             cb(null, result);
             return;
@@ -46,7 +46,7 @@ class postService extends baseService<PostView, postViewModel> {
           const createdPost = { ...repositoryPost, ...post };
 
           const result = await this.repository.save(createdPost);
-          emitEvent("postcreated", result, config);
+          emitEvent("postcreated", {data: result, config: config});
 
           console.log("Handled post", post.post.id);
 

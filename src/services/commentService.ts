@@ -9,6 +9,7 @@ import emitEvent from "../helpers/eventHelper";
 import CommunityService from "./communityService";
 import communityConfigModel from "../models/communityConfigModel";
 import communityConfigService from "./communityConfigService";
+import { sleep } from "../helpers/lemmyHelper";
 
 @Service()
 class commentService extends baseService<
@@ -40,11 +41,11 @@ class commentService extends baseService<
             const updatedComment = { ...foundComment, ...comment };
             const result = await this.repository.save(updatedComment);
             if (comment.comment.deleted !== foundComment.comment.deleted) {
-              emitEvent("commentdeleted", result, config);
+              emitEvent("commentdeleted", { data: result, config: config });
             } else if (
               comment.comment.updated !== foundComment.comment.updated
             ) {
-              emitEvent("commentupdated", result, config);
+              emitEvent("commentupdated", { data: result, config: config });
             }
             cb(null, result);
             return;
@@ -53,7 +54,7 @@ class commentService extends baseService<
           const createdComment = { ...repositoryComment, ...comment };
 
           const result = await this.repository.save(createdComment);
-          emitEvent("commentcreated", result, config);
+          emitEvent("commentcreated", { data: result, config: config });
 
           console.log("Handled Comment", comment.post.id);
 
@@ -84,6 +85,7 @@ class commentService extends baseService<
       } catch (e) {
         console.log(e);
       }
+      await sleep(5000);
     }
     return comments;
   }
