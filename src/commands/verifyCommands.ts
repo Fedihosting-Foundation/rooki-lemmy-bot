@@ -108,10 +108,7 @@ export default class VerifyCommands {
         }
       });
       collector?.on("collect", async (i) => {
-        if ("message" in i) {
-          if (i.message.deletable) await i.message.delete();
-        }
-        if (i.customId === "verify-user") {
+              if (i.customId === "verify-user") {
           const code = this.verifiedUserService.createVerificationCode(
             user.person_view.person
           );
@@ -138,6 +135,9 @@ This message is automated! Please dont reply to this message!`,
             content: "Ok!",
             ephemeral: true,
           });
+        }
+        if ("message" in i) {
+          if (i.message.deletable) await i.message.delete();
         }
       });
     } catch (exc) {
