@@ -16,27 +16,27 @@ export default class BanCommands {
             required: true,
             type: ApplicationCommandOptionType.String,
         })
+        userId: string,
         @SlashOption({
             description: "Community Name",
             name: "communityname",
             required: true,
             type: ApplicationCommandOptionType.String,
         })
+        communityName: string,
         @SlashOption({
             description: "Expires",
             name: "numberofdays",
             required: true,
             type: ApplicationCommandOptionType.String,
         })
+        expiresIn: Number,
         @SlashOption({
             description: "Ban Reason",
             name: "banreason",
             required: true,
             type: ApplicationCommandOptionType.String,
         })
-        userId: string,
-        communityName: string,
-        expiresIn: Number,
         banReason: string,
         interaction: CommandInteraction
     ) {
@@ -89,20 +89,20 @@ export default class BanCommands {
             required: true,
             type: ApplicationCommandOptionType.String,
         })
+        userId: string,
         @SlashOption({
             description: "Community Name",
             name: "communityname",
             required: true,
             type: ApplicationCommandOptionType.String,
         })
+        communityName: string,
         @SlashOption({
             description: "Unban Reason",
             name: "unbanreason",
             required: true,
             type: ApplicationCommandOptionType.String,
         })
-        userId: string,
-        communityName: string,
         unbanReason: string,
         interaction: CommandInteraction
     ) {
