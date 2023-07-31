@@ -1,15 +1,33 @@
 import { Column, Entity } from "typeorm";
 import baseModel from "./baseModel";
-import { PostView } from "lemmy-js-client";
+import { PersonView, PostView } from "lemmy-js-client";
 export enum QueueEntryStatus {
-    Pending = "pending",
-    Completed = "completed",
+  Pending = "pending",
+  Completed = "completed",
 }
-@Entity({name: "rookie_mod_queue"})
-export default class ModQueueEntry extends baseModel  {
-    @Column()
-    entry: PostView;
+export enum QueueEntryResult {
+  Approved = "approved",
+  Removed = "removed",
+  Banned = "banned",
+}
 
-    @Column()
-    status: QueueEntryStatus = QueueEntryStatus.Pending;
+@Entity({ name: "rookie_mod_queue" })
+export default class ModQueueEntryModel extends baseModel {
+  @Column()
+  entry: PostView;
+
+  @Column()
+  status: QueueEntryStatus = QueueEntryStatus.Pending;
+
+  @Column({nullable: true})
+  result: QueueEntryResult | null;
+
+  @Column()
+  resultData?: {
+    modId: number;
+    reason: string;
+  };
+
+  @Column()
+  modNote?: {person: PersonView, note: string}[];
 }

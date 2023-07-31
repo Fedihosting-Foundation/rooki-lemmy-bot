@@ -6,6 +6,7 @@ import commentReportViewModel from "./models/commentReportViewModel";
 import personMentionViewModel from "./models/personMentionViewModel";
 import verifiedUserModel from "./models/verifiedUserModel";
 import communityConfigModel from "./models/communityConfigModel";
+import ModQueueEntryModel from "./models/modQueueEntry";
 
 const connection = new DataSource({
     type: "mongodb",
@@ -15,7 +16,7 @@ const connection = new DataSource({
     username: process.env.MONGODB_USERNAME,
     password: process.env.MONGODB_PASSWORD,
     authSource: process.env.MONGODB_AUTHSOURCE || "admin",
-    entities: [postViewModel, postReportViewModel, commentViewModel, commentReportViewModel, personMentionViewModel, verifiedUserModel, communityConfigModel],
+    entities: [postViewModel, postReportViewModel, commentViewModel, commentReportViewModel, personMentionViewModel, verifiedUserModel, communityConfigModel, ModQueueEntryModel],
 })
 
 

@@ -7,7 +7,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Box, textAlign } from "@mui/system";
 import { useState } from "react";
 import client from "../lemmyClient";
 import { useAppDispatch } from "../redux/hooks";

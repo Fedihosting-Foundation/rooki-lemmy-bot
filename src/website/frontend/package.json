@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@fontsource/roboto": "^5.0.5",
@@ -17,7 +18,7 @@
     "@types/react": "^18.2.17",
     "@types/react-dom": "^18.2.7",
     "browserify-tls": "^1.0.0",
-    "lemmy-js-client": "^0.19.0-rc.1",
+    "lemmy-js-client": "^0.18.3-rc.3",
     "net-browserify": "^0.2.4",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "path-browserify": "^1.0.1",
@@ -35,7 +36,7 @@
     "webpack": "^5.88.2"
   },
   "scripts": {
-    "start": "react-app-rewired start",
+    "start": "set PORT=3005 && react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject"
@@ -78,5 +79,6 @@
     "url": "^0.11.1",
     "util": "npm:util@^0.12.5",
     "zlib": "npm:browserify-zlib@^0.2.0"
-  }
+  },
+  "proxy": "http://127.0.0.1:3000"
 }

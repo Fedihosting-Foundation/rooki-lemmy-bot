@@ -10,6 +10,7 @@ import manageService from "./services/manageService";
 import connection from "./connection";
 import { instanceUrl } from "./helpers/lemmyHelper";
 import timedPostService from "./services/timedPostService";
+import { startServer } from "./website";
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -104,6 +105,8 @@ async function start() {
   const management = typeDiDependencyRegistryEngine.getService(manageService)!;
   const timedPost = typeDiDependencyRegistryEngine.getService(timedPostService)!;
   management.startTimers();
+  startServer()
+  
 }
 
 start();

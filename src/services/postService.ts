@@ -21,6 +21,8 @@ class postService extends baseService<PostView, postViewModel> {
   @Inject()
   CommunityConfigService: communityConfigService;
 
+  postCache: {[key: number]:PostView} = {};
+
   constructor() {
     super(
       async (input, cb) => {
@@ -60,6 +62,9 @@ class postService extends baseService<PostView, postViewModel> {
         concurrent: 4,
       }
     );
+    setInterval(() => {
+      this.postCache = {}
+    }, 1000 * 60 * 15);
   }
 
   async fetchAndUpdate() {
@@ -81,6 +86,21 @@ class postService extends baseService<PostView, postViewModel> {
       await sleep(2500);
     }
     return posts;
+  }
+
+  async getPost(id: number) {
+    if(this.postCache[id]) return this.postCache[id];
+    const dbPost = await this.repository.findOne({
+      where: { "post.id": { $eq: id } },
+    });
+    if (dbPost){
+      this.postCache[id] = dbPost;
+      return dbPost;
+    } 
+    const post = await client.getPost({ id: id, auth: getAuth() });
+
+    if(post) this.postCache[id] = post.post_view;
+    return post.post_view
   }
 }
 

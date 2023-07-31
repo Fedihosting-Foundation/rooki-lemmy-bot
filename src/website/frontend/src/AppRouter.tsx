@@ -5,7 +5,11 @@ import App from "./App";
 import { store } from "./redux/store";
 
 export const AppRouter = (props: any) => {
-  const theme = createTheme({});
+  const theme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

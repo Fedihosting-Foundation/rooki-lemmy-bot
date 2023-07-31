@@ -12,10 +12,11 @@ function App() {
   const [loading, setLoading] = useState<boolean>(true);
   const currentUser = useAppSelector(selectUser);
   const dispatch = useAppDispatch();
-  if (!currentUser) {
-    const jwt = localStorage.getItem("jwt");
-    const personid = localStorage.getItem("personid");
 
+  const jwt = localStorage.getItem("jwt");
+  const personid = localStorage.getItem("personid");
+
+  if (!currentUser && jwt && personid) {
     if (jwt && personid) {
       client
         .getPersonDetails({
@@ -32,6 +33,8 @@ function App() {
           setLoading(false);
         });
     }
+  } else if (loading) {
+    setLoading(false);
   }
   if (loading) return <CircularProgress />;
   return (

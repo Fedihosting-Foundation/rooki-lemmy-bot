@@ -1,5 +1,5 @@
-import { createReducer, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { GetPersonDetailsResponse, PersonView } from "lemmy-js-client";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { GetPersonDetailsResponse } from "lemmy-js-client";
 import { RootState } from "../store";
 
 const initialState: {

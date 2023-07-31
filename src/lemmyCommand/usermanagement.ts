@@ -1,8 +1,7 @@
 import { LemmyHttp } from "lemmy-js-client";
-import { LemmyCommand, getCommands } from "../decorators/lemmyPost";
+import { LemmyCommand } from "../decorators/lemmyPost";
 import { getAuth } from "../main";
 import { LemmyCommandArguments } from "../types/LemmyEvents";
-import { isModOfCommunity } from "../helpers/lemmyHelper";
 
 class usermanagementCommand {
   @LemmyCommand({
