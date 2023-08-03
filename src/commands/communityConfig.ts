@@ -516,7 +516,8 @@ export default class CommunityConfigCommands {
         await interaction.editReply(`Filter ${filtername} already exists!`);
         return;
       }
-      let wordText = await (await fetch(words.url)).text();
+      let wordText;
+      wordText = (await axios.get(words.url)).data as string;
       wordText = wordText.replace(/\r/gim, "\n");
       const wordList = wordText
         .split("\n")
