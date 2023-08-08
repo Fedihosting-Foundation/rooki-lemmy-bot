@@ -6,7 +6,7 @@ The reason why i used discord is that i dont have enough experience to port it t
 It (has the capability) to Log: 
 - Posts
 - Comments
-- Reprots
+- Reports
 
 Because of the issue with discords privacy policy. I am in the work of a dedicated Webpage for the mods of the community.
 
