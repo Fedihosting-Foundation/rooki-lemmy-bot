@@ -20,3 +20,8 @@ Still in Progress!
 Ask roooooooooooooooooooooooooooooki on discord
 
 Just ask!
+
+
+## Contributions are open!
+
+As i am not experienced with Matrix and their api any contribution adding the capability to do the logging to Matrix are open and wanted!
