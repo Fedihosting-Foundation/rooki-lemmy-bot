@@ -13,6 +13,7 @@ import { useAppDispatch } from "../redux/hooks";
 import { setUser } from "../redux/reducers/AuthenticationReducer";
 
 export default function Login() {
+  const [instance, setInstance] = useState<string>("https://lemmy.world");
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [mfa, setMfa] = useState<string | undefined>();
@@ -22,13 +23,28 @@ export default function Login() {
   >(null);
 
   const login = async () => {
+    if(!instance || !username || !password) {
+      setAlert({
+        severity: "error",
+        alertContent: "Please fill out all fields",
+      });
+      return;
+    };
+
+    if(!instance.startsWith("https://") || instance.trim() === "https://") {
+      setAlert({
+        severity: "error",
+        alertContent: "Instance must start with https:// and be a valid URL",
+      });
+      return;
+    };
+
     try {
       const response = await client.login({
         password: password,
         username_or_email: username,
         totp_2fa_token: mfa,
       });
-      console.log(response);
       if (!response.jwt) {
         setAlert({
           severity: "error",
@@ -41,7 +57,10 @@ export default function Login() {
       const site = await client.getSite({
         auth: response.jwt,
       });
+
       if (!site.my_user) return;
+
+      localStorage.setItem("instance", instance);
 
       localStorage.setItem(
         "personid",
@@ -83,6 +102,15 @@ export default function Login() {
         spacing={2}
         container
       >
+        <Grid xs={12} item>
+          <TextField
+            onChange={(ev) => {
+              setInstance(ev.target.value);
+            }}
+            label="Instance:"
+            defaultValue={"https://lemmy.world"}
+          ></TextField>
+        </Grid>
         <Grid xs={12} item>
           <TextField
             onChange={(ev) => {

@@ -6,7 +6,7 @@
   "main": "build/main.js",
   "scripts": {
     "dev": "ts-node-esm src/main.ts",
-    "build": "tsc & cd src/website/frontend && npm install && npm run build && move-cli ./build ../../../build/website/frontend -md && cd ../../..",
+    "build": "del-cli build && tsc & cd src/website/frontend && npm install && npm run build && del-cli ../../../build/website/frontend -f && move-cli ./build ../../../build/website/frontend -md && cd ../../..",
     "start": "node build/main.js",
     "watch": "nodemon --exec ts-node src/main.ts"
   },
@@ -16,6 +16,7 @@
     "axios": "^1.4.0",
     "better-queue": "^3.8.12",
     "cors": "^2.8.5",
+    "del-cli": "^5.0.0",
     "discord.js": "^14.11.0",
     "discordx": "^11.7.6",
     "dotenv": "^16.3.1",

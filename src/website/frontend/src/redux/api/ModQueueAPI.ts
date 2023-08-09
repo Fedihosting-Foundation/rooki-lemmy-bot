@@ -1,8 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import IModQueueEntry, { QueueEntryResult } from "../../models/IModeQueueEntry";
-const ModQueueApi = createApi({
+import IModQueueEntry, {
+  QueueEntryResult,
+  allowedEntries,
+} from "../../models/IModeQueueEntry";
+const modQueueApi = createApi({
+  reducerPath: "modqueue",
   baseQuery: fetchBaseQuery({
-    baseUrl: "/api",
+    baseUrl: "api",
     prepareHeaders(headers, api) {
       const token = localStorage.getItem("jwt");
       if (token) {
@@ -10,26 +14,30 @@ const ModQueueApi = createApi({
       }
 
       const user = localStorage.getItem("personid");
-      console.log(user);
       if (user) {
         headers.set("user", user);
       }
-      console.log(headers);
+
+      const instance =
+        localStorage.getItem("instance") || "https://lemmy.world";
+
+      headers.set("instance", instance);
       return headers;
     },
   }),
   tagTypes: ["modqueue"],
-
+  refetchOnFocus: true,
+  refetchOnReconnect: true,
   endpoints: (builder) => ({
-    getModqueue: builder.query<IModQueueEntry[], void>({
+    getModqueue: builder.query<IModQueueEntry<allowedEntries>[], void>({
       query: () => `/modqueue`,
       providesTags: ["modqueue"],
     }),
     updateModqueue: builder.mutation<
-      IModQueueEntry,
+      IModQueueEntry<allowedEntries>,
       {
         result?: QueueEntryResult;
-        postId: number;
+        id: string;
         reason: string;
       }
     >({
@@ -41,7 +49,7 @@ const ModQueueApi = createApi({
       invalidatesTags: ["modqueue"],
     }),
     addModMessage: builder.mutation<
-      IModQueueEntry,
+      IModQueueEntry<allowedEntries>,
       {
         postId: number;
         modNote: string;
@@ -54,12 +62,19 @@ const ModQueueApi = createApi({
       }),
       invalidatesTags: ["modqueue"],
     }),
+    refreshModMessage: builder.mutation<IModQueueEntry<allowedEntries>, string>(
+      {
+        query: (postId) => `/modqueue/refresh/${postId}`,
+        invalidatesTags: ["modqueue"],
+      }
+    ),
   }),
 });
 
 export const {
+  useRefreshModMessageMutation,
   useGetModqueueQuery,
   useUpdateModqueueMutation,
   useAddModMessageMutation,
-} = ModQueueApi;
-export default ModQueueApi;
+} = modQueueApi;
+export default modQueueApi;

@@ -3,6 +3,7 @@ const config:{
     reasons: {
         value: string,
         label?: string,
+        type?: "Post" | "Comment" | "Report",
     }[],
 } = {
     instance: "https://lemmy.world/",
@@ -31,6 +32,22 @@ const config:{
         {
             value: "Other",
         },
+        {
+            value: "Duplicate",
+            type: "Post",
+        },
+        {
+            value: "Wrong Community",
+            type: "Post",
+        },
+        {
+            value: "Report was unjustified",
+            type: "Report",
+        },
+        {
+            value: "Report was a mistake",
+            type: "Report",
+        }
     ]
 }
 

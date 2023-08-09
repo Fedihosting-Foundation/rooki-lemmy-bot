@@ -59,7 +59,6 @@ class helpCommand {
       parent_id: event.data.comment.id,
       auth: getAuth(),
       post_id: event.data.post.id,
-      language_id: event.data.comment.language_id,
     });
   }
 }

@@ -1,10 +1,6 @@
 import { LemmyHttp } from "lemmy-js-client";
 import config from "./config";
 
-const client = new LemmyHttp(config.instance, {
-  headers: {
-    "User-Agent": "From rookis-modqueue",
-  },
-});
+const client = new LemmyHttp(config.instance);
 
 export default client

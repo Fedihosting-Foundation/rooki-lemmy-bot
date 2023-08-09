@@ -3,11 +3,11 @@ import { GetPersonDetailsResponse } from "lemmy-js-client";
 import { RootState } from "../store";
 
 const initialState: {
+  instance: string;
   user?: GetPersonDetailsResponse;
-  token?: string;
 } = {
+  instance: "https://lemmy.world",
   user: undefined,
-  token: undefined,
 };
 
 const AuthenticationReducer = createSlice({
@@ -17,6 +17,9 @@ const AuthenticationReducer = createSlice({
     setUser: (state, action: PayloadAction<GetPersonDetailsResponse>) => {
       state.user = action.payload;
     },
+    setInstance:(state, action: PayloadAction<string>) => {
+      state.instance = action.payload;
+    }
   },
 });
 
@@ -24,3 +27,4 @@ export const { setUser } = AuthenticationReducer.actions;
 export default AuthenticationReducer.reducer;
 
 export const selectUser = (state: RootState) => state.AuthenticationReducer.user;
+export const selectInstance = (state: RootState) => state.AuthenticationReducer.instance;

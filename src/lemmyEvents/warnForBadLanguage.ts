@@ -64,7 +64,7 @@ async function checkForBadLanguage(
       channel.send({
         content: "Profanity detected!",
         embeds: [embed],
-        components: [getActionForComment(data)],
+        components: [...getActionForComment(data)],
       });
     } else {
       const embed = LogHelper.postToEmbed(data);
@@ -83,7 +83,7 @@ async function checkForBadLanguage(
       channel.send({
         content: "Profanity detected!",
         embeds: [embed],
-        components: [getActionForPost(data)],
+        components: [...getActionForPost(data)],
       });
     }
   }
@@ -98,8 +98,8 @@ class warnForBadLanguage {
       event.config,
       event.data
     ).catch((x) => {
-      console.log(x);
       console.log("Something went wrong CHECKPOST");
+      console.log(x);
     });
   }
 

@@ -94,11 +94,10 @@ export default class LogCommands {
 
       await initialInteraction.message.edit({
         embeds: [embed],
-        components: [
+        components:
           "comment" in data
             ? getActionForComment(data)
             : getActionForPost(data),
-        ],
       });
       initialInteraction.editReply({
         content: "Updated!",
@@ -162,9 +161,12 @@ export default class LogCommands {
       const firstRow =
         new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
           reason,
-          deleteData
         );
-      modal.addComponents(firstRow);
+        const secondRow =
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          deleteData,
+        );
+      modal.addComponents(firstRow, secondRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
         i.deferUpdate();
@@ -195,19 +197,17 @@ export default class LogCommands {
         content: `User was ${
           banned ? "banned" : "unbanned"
         } by ${interaction.user.toString()}!`,
-        components: [
-          comment
-            ? getActionForComment(
-                (
-                  await client.getComment({ auth: getAuth(), id: dataId })
-                ).comment_view
-              )
-            : getActionForPost(
-                (
-                  await client.getPost({ auth: getAuth(), id: dataId })
-                ).post_view
-              ),
-        ],
+        components: comment
+          ? getActionForComment(
+              (
+                await client.getComment({ auth: getAuth(), id: dataId })
+              ).comment_view
+            )
+          : getActionForPost(
+              (
+                await client.getPost({ auth: getAuth(), id: dataId })
+              ).post_view
+            ),
       });
       await interaction.editReply({
         content: `User ${banned ? "banned" : "unbanned"}!`,
@@ -215,7 +215,7 @@ export default class LogCommands {
     } catch (exc) {
       console.log(exc);
       initialInteraction.channel?.send(
-        `Something went wrong ${initialInteraction.user.toString()}!}`
+        `Something went wrong ${initialInteraction.user.toString()}!`
       );
     }
   }
@@ -309,7 +309,7 @@ export default class LogCommands {
     } catch (exc) {
       console.log(exc);
       initialInteraction.channel?.send(
-        `Something went wrong ${initialInteraction.user.toString()}!}`
+        `Something went wrong ${initialInteraction.user.toString()}!`
       );
     }
   }
@@ -387,7 +387,7 @@ export default class LogCommands {
         content: `Post was ${
           removed ? "removed" : "restored"
         } by ${interaction.user.toString()}!`,
-        components: [getActionForPost(post.post_view)],
+        components: [...getActionForPost(post.post_view)],
       });
       await interaction.editReply({
         content: `Post ${removed ? "removed" : "restored"}!`,
@@ -466,7 +466,7 @@ export default class LogCommands {
         } by ${interaction.user.toString()} with the reason: ${
           result[0] || "no reason given"
         }!`,
-        components: [getActionForPostReport(post.post_report_view)],
+        components: [...getActionForPostReport(post.post_report_view)],
       });
       await interaction.editReply({
         content: `Post ${resolved ? "resolved" : "unresolved"}!`,
@@ -545,7 +545,7 @@ export default class LogCommands {
         } by ${interaction.user.toString()} with the reason: ${
           result[0] || "no reason given"
         }!`,
-        components: [getActionForCommentReport(comment.comment_report_view)],
+        components: [...getActionForCommentReport(comment.comment_report_view)],
       });
       await interaction.editReply({
         content: `Post ${resolved ? "resolved" : "unresolved"}!`,
@@ -637,7 +637,7 @@ export default class LogCommands {
         content: `Post was ${
           removed ? "removed" : "restored"
         } by ${interaction.user.toString()}!`,
-        components: [getActionForPost(post.post_view)],
+        components: [...getActionForPost(post.post_view)],
       });
       await interaction.editReply({
         content: `Post ${removed ? "removed" : "restored"}!`,

@@ -1,6 +1,6 @@
 import { Column, Entity } from "typeorm";
 import baseModel from "./baseModel";
-import { PersonView, PostView } from "lemmy-js-client";
+import { CommentReportView, PersonView, PostReportView, PostView } from "lemmy-js-client";
 export enum QueueEntryStatus {
   Pending = "pending",
   Completed = "completed",
@@ -9,17 +9,20 @@ export enum QueueEntryResult {
   Approved = "approved",
   Removed = "removed",
   Banned = "banned",
+  Unbanned = "unbanned",
+  Locked = "locked",
 }
+export type allowedEntries = PostView | PostReportView | CommentReportView;
 
 @Entity({ name: "rookie_mod_queue" })
-export default class ModQueueEntryModel extends baseModel {
+export default class ModQueueEntryModel<T extends allowedEntries> extends baseModel {
   @Column()
-  entry: PostView;
+  entry: T;
 
   @Column()
   status: QueueEntryStatus = QueueEntryStatus.Pending;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   result: QueueEntryResult | null;
 
   @Column()
@@ -29,5 +32,5 @@ export default class ModQueueEntryModel extends baseModel {
   };
 
   @Column()
-  modNote?: {person: PersonView, note: string}[];
+  modNote?: { person: PersonView; note: string }[];
 }

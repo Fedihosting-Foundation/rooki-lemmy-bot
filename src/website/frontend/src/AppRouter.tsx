@@ -1,15 +1,19 @@
 import { ThemeProvider } from "@emotion/react";
-import { createTheme, CssBaseline } from "@mui/material";
+import { createTheme, CssBaseline, responsiveFontSizes } from "@mui/material";
 import { Provider } from "react-redux";
 import App from "./App";
 import { store } from "./redux/store";
 
 export const AppRouter = (props: any) => {
-  const theme = createTheme({
+  const defaultTheme = createTheme({
     palette: {
       mode: 'dark',
     },
   });
+  const theme = responsiveFontSizes(defaultTheme, {
+    factor: 2,
+  });
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

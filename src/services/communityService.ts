@@ -1,4 +1,4 @@
-import { GetCommunityResponse, GetPersonDetails, GetPersonDetailsResponse } from "lemmy-js-client";
+import { GetCommunityResponse, GetPersonDetails, GetPersonDetailsResponse, LemmyHttp } from "lemmy-js-client";
 import client, { getAuth } from "../main";
 import { Service } from "typedi";
 
@@ -26,13 +26,14 @@ export default class CommunityService {
       | {
           id: number;
         },
-    force = false
+    force = false,
+    lclient: LemmyHttp = client
   ) {
     try {
       if ("name" in data) {
         if (!force && this.userCache[data.name])
           return this.userCache[data.name];
-        const user = await client.getPersonDetails({
+        const user = await lclient.getPersonDetails({
           auth: getAuth(),
           username: data.name,
         });
@@ -43,7 +44,7 @@ export default class CommunityService {
         return user;
       } else {
         if (!force && this.userCache[data.id]) return this.userCache[data.id];
-        const user = await client.getPersonDetails({
+        const user = await lclient.getPersonDetails({
           auth: getAuth(),
           person_id: data.id,
         });
@@ -67,13 +68,14 @@ export default class CommunityService {
       | {
           id: number;
         },
-    force = false
-  ) {
+    force = false,
+    lclient: LemmyHttp = client
+    ) {
     try {
       if ("name" in data) {
         if (!force && this.communityCache[data.name])
           return this.communityCache[data.name];
-        const community = await client.getCommunity({
+        const community = await lclient.getCommunity({
           auth: getAuth(),
           name: data.name,
         });
@@ -85,7 +87,7 @@ export default class CommunityService {
       } else {
         if (!force && this.communityCache[data.id])
           return this.communityCache[data.id];
-        const community = await client.getCommunity({
+        const community = await lclient.getCommunity({
           auth: getAuth(),
           id: data.id,
         });

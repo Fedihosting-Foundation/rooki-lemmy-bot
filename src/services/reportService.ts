@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { CommentReportView, PostReportView } from "lemmy-js-client";
+import { CommentReportView, ListCommentReports, ListCommentReportsResponse, ListPostReportsResponse, PostReportView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";
@@ -28,6 +28,10 @@ class reportService extends baseService<
 
   @Inject()
   CommunityConfigService: communityConfigService;
+  
+  commentReportCache: CommentReportView[] = []
+
+    postReportCache: PostReportView[] = []
 
   constructor() {
     super(
@@ -49,7 +53,10 @@ class reportService extends baseService<
                 foundCommentReport.comment_report.resolved !==
                 data.comment_report.resolved
               ) {
-                emitEvent("commentreportupdated", {data: foundCommentReport, config: config});
+                emitEvent("commentreportupdated", {
+                  data: foundCommentReport,
+                  config: config,
+                });
               }
               cb(null, foundCommentReport);
               return;
@@ -64,8 +71,8 @@ class reportService extends baseService<
               createdCommentReport
             );
 
-            emitEvent("commentreportcreated", {data: result, config: config});
-            console.log("Handled Post Report", data.post.id);
+            emitEvent("commentreportcreated", { data: result, config: config });
+            console.log("Handled Comment Report", data.comment.id);
             cb(null, result);
             return;
           } else {
@@ -79,7 +86,10 @@ class reportService extends baseService<
                 data.post_report.resolved !==
                 foundPostReport.post_report.resolved
               ) {
-                emitEvent("postreportupdated", {data: foundPostReport, config: config});
+                emitEvent("postreportupdated", {
+                  data: foundPostReport,
+                  config: config,
+                });
               }
               cb(null, result);
               return;
@@ -91,7 +101,7 @@ class reportService extends baseService<
             };
 
             const result = await this.postRepository.save(createdPostReport);
-            emitEvent("postreportcreated", {data: result, config: config});
+            emitEvent("postreportcreated", { data: result, config: config });
             console.log("Handled Post Report", data.post.id);
             cb(null, result);
             return;
@@ -105,16 +115,20 @@ class reportService extends baseService<
         concurrent: 4,
       }
     );
+    setInterval(() => {
+      this.getCommentReports(true)
+      this.getPostReports(true)
+    }, 1000 * 60 * 15);
   }
 
   async fetchAndUpdate() {
     const postReports: PostReportView[] = [];
     const commentReports: CommentReportView[] = [];
-    for (const community of await this.CommunityConfigService.getCommunities()) {
+    for (let i = 1; i < 3; i++) {
       try {
         const postResult = await client.listPostReports({
           auth: getAuth(),
-          community_id: community.community.id
+          page: i,
         });
         console.log("Fetched Post Reports");
         this.push(...postResult.post_reports);
@@ -122,17 +136,72 @@ class reportService extends baseService<
         await sleep(2000);
         const commentResult = await client.listCommentReports({
           auth: getAuth(),
-          community_id: community.community.id
+          page: i,
         });
-        console.log("Fetched Comment Reports");
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);
       } catch (e) {
+        console.log("Report Fetch Error");
         console.log(e);
       }
       await sleep(15000);
+      console.log("Fetched Comment Reports");
     }
     return [postReports, commentReports];
+  }
+
+  async getPostReports(force: boolean = false) {
+    if (!force) {
+      const cachedReports = this.postReportCache;
+      if (cachedReports.length > 0) {
+        return cachedReports;
+      }
+    }
+    const reports: PostReportView[] = []
+
+    for (let i = 1; i <= 3; i++) {
+      try{
+        reports.push(...(await client.listPostReports({ auth: getAuth() })).post_reports)
+      }
+      catch(e){
+        console.log(e)
+      }
+      await sleep(5000)
+    }
+    this.postReportCache = reports
+
+    return this.postReportCache
+  }
+
+  async getCommentReports(force: boolean = false) {
+    if (!force) {
+      const cachedReports = this.commentReportCache;
+      if (cachedReports.length > 0) {
+        return cachedReports;
+      }
+    }
+    const reports: CommentReportView[] = []
+
+    for (let i = 1; i <= 3; i++) {
+      try{
+        reports.push(...(await client.listCommentReports({ auth: getAuth() })).comment_reports)
+      }
+      catch(e){
+        console.log(e)
+      }
+      await sleep(5000)
+    }
+    this.commentReportCache = reports
+
+    return this.commentReportCache
+  }
+
+  async getPostReport(reportId: number) {
+    return this.postReportCache.find((x) => x.post_report.id === reportId)
+  }
+
+  async getCommentReport(reportId: number) {
+    return this.postReportCache.find((x) => x.post_report.id === reportId)
   }
 }
 

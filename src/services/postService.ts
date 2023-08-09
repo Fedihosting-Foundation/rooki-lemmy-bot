@@ -21,14 +21,16 @@ class postService extends baseService<PostView, postViewModel> {
   @Inject()
   CommunityConfigService: communityConfigService;
 
-  postCache: {[key: number]:PostView} = {};
+  postCache: { [key: number]: PostView } = {};
 
   constructor() {
     super(
       async (input, cb) => {
         const post = input as PostView;
         try {
-          const config = await this.CommunityConfigService.getCommunityConfig(post.community);
+          const config = await this.CommunityConfigService.getCommunityConfig(
+            post.community
+          );
           if (!config) return;
           const foundPost = await this.repository.findOne({
             where: { "post.id": { $eq: post.post.id } },
@@ -37,9 +39,9 @@ class postService extends baseService<PostView, postViewModel> {
             const updatedPost = { ...foundPost, ...post };
             const result = await this.repository.save(updatedPost);
             if (post.post.deleted !== foundPost.post.deleted) {
-              emitEvent("postdeleted", {data: result, config: config});
+              emitEvent("postdeleted", { data: result, config: config });
             } else if (post.post.updated !== foundPost.post.updated) {
-              emitEvent("postupdated", {data: result, config: config});
+              emitEvent("postupdated", { data: result, config: config });
             }
             cb(null, result);
             return;
@@ -48,7 +50,7 @@ class postService extends baseService<PostView, postViewModel> {
           const createdPost = { ...repositoryPost, ...post };
 
           const result = await this.repository.save(createdPost);
-          emitEvent("postcreated", {data: result, config: config});
+          emitEvent("postcreated", { data: result, config: config });
 
           console.log("Handled post", post.post.id);
 
@@ -63,13 +65,13 @@ class postService extends baseService<PostView, postViewModel> {
       }
     );
     setInterval(() => {
-      this.postCache = {}
+      this.postCache = {};
     }, 1000 * 60 * 15);
   }
 
   async fetchAndUpdate() {
     const posts: PostView[] = [];
-    for (const community of ( await this.CommunityConfigService.getCommunities())) {
+    for (const community of await this.CommunityConfigService.getCommunities()) {
       try {
         const result = await client.getPosts({
           community_id: community.community.id,
@@ -81,26 +83,30 @@ class postService extends baseService<PostView, postViewModel> {
         this.push(...result.posts);
         posts.push(...result.posts);
       } catch (e) {
+        console.log("Post Fetch Error")
         console.log(e);
       }
-      await sleep(2500);
+      await sleep(10000);
     }
     return posts;
   }
 
-  async getPost(id: number) {
-    if(this.postCache[id]) return this.postCache[id];
-    const dbPost = await this.repository.findOne({
-      where: { "post.id": { $eq: id } },
-    });
-    if (dbPost){
-      this.postCache[id] = dbPost;
-      return dbPost;
-    } 
+  async getPost(id: number, force: boolean = false) {
+    if (!force && this.postCache[id]) return this.postCache[id];
+    if (force) {
+      const dbPost = await this.repository.findOne({
+        where: { "post.id": { $eq: id } },
+      });
+      if (dbPost) {
+        this.postCache[id] = dbPost;
+        return dbPost;
+      }
+    }
+
     const post = await client.getPost({ id: id, auth: getAuth() });
 
-    if(post) this.postCache[id] = post.post_view;
-    return post.post_view
+    if (post) this.postCache[id] = post.post_view;
+    return post.post_view;
   }
 }
 

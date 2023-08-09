@@ -8,10 +8,13 @@ import {
   PostReportView,
   CommentReportView,
   Comment,
-  PersonView,
   PersonAggregates,
 } from "lemmy-js-client";
-import { instanceUrl } from "./lemmyHelper";
+import {
+  extractInstanceFromActorId,
+  getActorId,
+} from "./lemmyHelper";
+import config from "../config";
 
 export default class LogHelper {
   static commentToEmbed({
@@ -38,7 +41,7 @@ export default class LogHelper {
         name: creator.name,
         iconURL: creator.avatar ? creator.avatar : undefined,
       })
-      .setURL(`${instanceUrl}/comment/${comment.id}`)
+      .setURL(`${config.lemmyInstance}/comment/${comment.id}`)
       .setTimestamp(new Date(counts.published + "Z"))
       .setFooter({
         text: `Posted in ${community.name}`,
@@ -91,7 +94,7 @@ export default class LogHelper {
       .setTitle(
         post.name.length > 256 ? post.name.slice(0, 250) + "..." : post.name
       )
-      .setURL(`${instanceUrl}/post/${post.id}`)
+      .setURL(`${config.lemmyInstance}/post/${post.id}`)
       .setAuthor({
         name: creator.name,
         iconURL: creator.avatar ? creator.avatar : undefined,
@@ -210,20 +213,40 @@ export default class LogHelper {
     return [embed, commentEmbed];
   }
 
-  static userToEmbed({ counts, person }: {counts?: PersonAggregates, person: Person }) {
+  static userToEmbed({
+    counts,
+    person,
+  }: {
+    counts?: PersonAggregates;
+    person: Person;
+  }) {
     const embed = new EmbedBuilder()
       .setTitle("Person Detail")
       .setDescription(person.bio || "**User has no Bio**")
       .setAuthor({
-        name: person.name,
+        name: person.local
+          ? person.name
+          : getActorId(
+              extractInstanceFromActorId(person.actor_id),
+              person.name
+            ),
         iconURL: person.avatar ? person.avatar : undefined,
       })
       .setTimestamp(new Date(person.published + "Z"))
       .addFields([
         { name: "ID", value: String(person.id), inline: true },
         { name: "Admin", value: person.admin ? "Yes" : "No", inline: true },
-              ])
-      .setURL(`${instanceUrl}/u/${person.name}`)
+      ])
+      .setURL(
+        `${config.lemmyInstance}/u/${
+          person.local
+            ? person.name
+            : getActorId(
+                extractInstanceFromActorId(person.actor_id),
+                person.name
+              )
+        }`
+      )
       .setFooter({
         text: `User`,
       });

@@ -1,9 +1,15 @@
-import { PostView } from "lemmy-js-client";
+import { CommentReportView, PostReportView, PostView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import "reflect-metadata";
 import CommunityService from "./communityService";
 import modQueueRepository from "../repository/modQueueRepository";
-import ModQueueEntryModel from "../models/modQueueEntry";
+import ModQueueEntryModel, {
+  allowedEntries,
+} from "../models/modQueueEntryModel";
+import postService from "./postService";
+import client, { getAuth } from "../main";
+import { asyncForEach } from "../utils/AsyncForeach";
+import { ObjectId } from "mongodb";
 
 @Service()
 class modQueueService {
@@ -13,11 +19,14 @@ class modQueueService {
   @Inject()
   communityService: CommunityService;
 
+  @Inject()
+  postService: postService;
+
   constructor() {}
 
-  async addModQueueEntry(post: PostView) {
+  async addModQueueEntry(data: allowedEntries) {
     const entry = this.repository.create();
-    entry.entry = post;
+    entry.entry = data;
     return await this.repository.save(entry);
   }
 
@@ -25,8 +34,14 @@ class modQueueService {
     return await this.repository.findAll();
   }
 
-  async updateModQueueEntry(data: ModQueueEntryModel) {
+  async updateModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
     return await this.repository.save(data);
+  }
+
+  async getModQueueEntryById(id: string) {
+    return await this.repository.findOne({
+      where: { _id: { $eq: new ObjectId(id) } },
+    });
   }
 
   async getModQueueEntriesByCommunity(communityId: string) {
@@ -35,14 +50,72 @@ class modQueueService {
     });
   }
 
-  async getModQueueEntry(postId: number) {
+  async getModQueueEntriesByUser(userId: string | number) {
+    return await this.repository.find({
+      where: { "entry.creator.id": { $eq: userId } },
+    });
+  }
+  async getModQueueEntryByPostId(postId: number) {
     return await this.repository.findOne({
       where: { "entry.post.id": { $eq: postId } },
     });
   }
-
-  async removeModQueueEntry(data: ModQueueEntryModel) {
+  async getModQueueEntryByCommentReportId(commentReportId: number) {
+    return await this.repository.findOne({
+      where: { "entry.comment_report.id": { $eq: commentReportId } },
+    });
+  }
+  async getModQueueEntryByPostReportId(postReportId: number) {
+    return await this.repository.findOne({
+      where: { "entry.post_report.id": { $eq: postReportId } },
+    });
+  }
+  async removeModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
     return await this.repository.delete(data);
+  }
+
+  async refreshModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
+    console.log("REFRESHING MOD QUEUE ENTRY", data);
+    if ("comment_report" in data.entry) {
+      const list = (await client.listCommentReports({ auth: getAuth(), unresolved_only: false }))
+        .comment_reports;
+      await asyncForEach(list, async (report) => {
+        const foundReport = await this.getModQueueEntryByCommentReportId(
+          report.comment_report.id
+        );
+        if (foundReport) {
+          foundReport.entry = report;
+          await this.updateModQueueEntry(foundReport);
+        }
+      });
+      return;
+    } else if ("post_report" in data.entry) {
+      const list = (await client.listPostReports({ auth: getAuth(), unresolved_only: false }))
+        .post_reports;
+        console.log("UPADTING POST REPORT")
+      await asyncForEach(list, async (report) => {
+        const foundReport = await this.getModQueueEntryByPostReportId(
+          report.post_report.id
+        );
+        console.log("FOUND REPORT", foundReport)
+        if (foundReport) {
+          foundReport.entry = report;
+          await this.updateModQueueEntry(foundReport);
+        }
+      });
+
+      return;
+    }
+
+    const entry = await this.postService.getPost(data.entry.post.id, true);
+
+    if (!entry) {
+      return null;
+    }
+
+    data.entry = entry;
+
+    return await this.updateModQueueEntry(data);
   }
 }
 

@@ -8,9 +8,9 @@ import { LemmyHttp } from "lemmy-js-client";
 import Container, { Service } from "typedi";
 import manageService from "./services/manageService";
 import connection from "./connection";
-import { instanceUrl } from "./helpers/lemmyHelper";
 import timedPostService from "./services/timedPostService";
 import { startServer } from "./website";
+import config from "./config";
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -66,7 +66,7 @@ bot.on("messageCreate", (message: Message) => {
   bot.executeCommand(message);
 });
 
-const client: LemmyHttp = new LemmyHttp(instanceUrl, {
+const client: LemmyHttp = new LemmyHttp(config.lemmyInstance,{
   headers:{
     "User-Agent": "rooki-bot",
   }

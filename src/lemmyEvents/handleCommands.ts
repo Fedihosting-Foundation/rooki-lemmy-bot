@@ -27,7 +27,6 @@ class CommandHandler {
     const matches = [...body.matchAll(mentionReg)].find((x) => {
       return x[1].includes(event.data.recipient.actor_id);
     });
-    console.log(!matches || matches.length === 0);
     if (!matches || matches.length === 0) return;
 
     const mention = matches[0];

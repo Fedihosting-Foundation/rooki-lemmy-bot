@@ -10,8 +10,6 @@
 
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "declaration": true,
-    "declarationMap": true,
     "forceConsistentCasingInFileNames": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": false,

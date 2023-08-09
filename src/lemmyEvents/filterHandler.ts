@@ -15,16 +15,12 @@ export default class FilterHandler {
     const filtered = event.config?.filterConfig.filter((x) => x.posts && x.enabled);
     if (!filtered || filtered.length === 0) return;
     filtered.forEach(async (x) => {
-      console.log("Checking for match!");
-      console.log(x);
       const found = checkText(x.words, [
         event.data.post.body || "",
         event.data.post.name,
         event.data.post.url,
       ]);
       if (found.found) {
-        console.log("Found a match!");
-        console.log(found);
         switch (x.action) {
           case "ban":
             await client.banFromCommunity({
@@ -47,7 +43,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
-                  components: [getActionForPost(event.data)],
+                  components: [...getActionForPost(event.data)],
                 },
                 {
                   channel:
@@ -70,7 +66,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
-                  components: [getActionForPost(event.data)],
+                  components: [...getActionForPost(event.data)],
                 },
                 {
                   channel:
@@ -92,7 +88,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
-                  components: [getActionForPost(event.data)],
+                  components: [...getActionForPost(event.data)],
                 },
                 {
                   channel:
@@ -109,7 +105,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
-                  components: [getActionForPost(event.data)],
+                  components: [...getActionForPost(event.data)],
                 },
                 {
                   channel:
@@ -133,12 +129,8 @@ export default class FilterHandler {
     const filtered = event.config?.filterConfig.filter((x) => x.comments && x.enabled);
     if (!filtered || filtered.length === 0) return;
     filtered.forEach(async (x) => {
-      console.log("Checking for match!");
-      console.log(x);
       const found = checkText(x.words, [event.data.comment.content]);
       if (found.found) {
-        console.log("Found a match!");
-        console.log(found);
         switch (x.action) {
           case "ban":
             await client.banFromCommunity({
@@ -161,7 +153,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
-                  components: [getActionForComment(event.data)],
+                  components: [...getActionForComment(event.data)],
                 },
                 {
                   channel:
@@ -184,7 +176,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
-                  components: [getActionForComment(event.data)],
+                  components: [...getActionForComment(event.data)],
                 },
                 {
                   channel:
@@ -206,7 +198,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
-                  components: [getActionForComment(event.data)],
+                  components: [...getActionForComment(event.data)],
                 },
                 {
                   channel:
@@ -224,7 +216,7 @@ export default class FilterHandler {
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}!`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
-                  components: [getActionForComment(event.data)],
+                  components: [...getActionForComment(event.data)],
                 },
                 {
                   channel:
@@ -257,7 +249,7 @@ const checkText = (
     } catch (e) {
       console.log(e);
     }
-    if (filterText.find((x) => x.match(regex) || x.includes(word))) {
+    if (filterText.find((x) => regex instanceof RegExp ? x.match(regex) : x.includes(word))) {
       return true;
     }
   });
