@@ -5,17 +5,23 @@ import {
   ButtonStyle,
   CommandInteraction,
   ComponentType,
+  Guild,
 } from "discord.js";
 import { Discord, Slash, SlashOption } from "discordx";
 import client, { getAuth } from "../main";
 import LogHelper from "../helpers/logHelper";
 import verifiedUserService from "../services/verifiedUserService";
 import { Inject } from "typedi";
+import communityConfigService from "../services/communityConfigService";
 
 @Discord()
 export default class VerifyCommands {
   @Inject()
   verifiedUserService: verifiedUserService;
+
+  @Inject()
+  communityConfigService: communityConfigService;
+
   @Slash({ description: "Verify a lemmy account", name: "verify" })
   async verify(
     @SlashOption({
@@ -36,7 +42,10 @@ export default class VerifyCommands {
   ) {
     await interaction.deferReply({ ephemeral: true });
     if (code) {
-      const verified = this.verifiedUserService.verifyCode(parseInt(code));
+      const verified = this.verifiedUserService.verifyCode(
+        parseInt(code),
+        false
+      );
       if (verified.length === 0) {
         await interaction.editReply("Code not found!");
         return;
@@ -44,8 +53,13 @@ export default class VerifyCommands {
 
       const user = verified[0].lemmyUser;
       const discordUser = interaction.user;
+      if (user.name !== userId) {
+        await interaction.editReply("Code not found!");
+        return;
+      }
       try {
         await this.verifiedUserService.createConnection(user, discordUser);
+        this.verifiedUserService.verifyCode(parseInt(code));
         await interaction.editReply("You are now verified!");
       } catch (exc) {
         console.log(exc);
@@ -108,7 +122,8 @@ export default class VerifyCommands {
         }
       });
       collector?.on("collect", async (i) => {
-              if (i.customId === "verify-user") {
+        await i.deferReply({ ephemeral: true });
+        if (i.customId === "verify-user") {
           const code = this.verifiedUserService.createVerificationCode(
             user.person_view.person
           );
@@ -124,20 +139,15 @@ If you did not request this verification, please ignore this message! If i keep 
 This message is automated! Please dont reply to this message!`,
           });
 
-          await i.reply({
+          await i.editReply({
             content:
               "Ok, we i will send you a dm on lemmy with a verification code!",
-            ephemeral: true,
           });
         }
         if (i.customId === "deny-user") {
-          await i.reply({
+          await i.editReply({
             content: "Ok!",
-            ephemeral: true,
           });
-        }
-        if ("message" in i) {
-          if (i.message.deletable) await i.message.delete();
         }
       });
     } catch (exc) {

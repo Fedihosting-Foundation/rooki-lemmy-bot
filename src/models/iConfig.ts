@@ -49,4 +49,16 @@ export default interface IConfig {
    * The Fetch Intervals
    */
   fetchInterval: { [key in FetchIntervals]: number };
+  lemmyInstance: string;
+
+  thirdParty: {
+    photon: {
+      enabled: boolean;
+      url?: string;
+    },
+    alexandrite: {
+      enabled: boolean;
+      url?: string;
+    },
+  }
 }

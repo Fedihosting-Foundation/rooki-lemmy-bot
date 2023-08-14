@@ -1,10 +1,23 @@
-import { Community, GetCommunityResponse, Person } from "lemmy-js-client";
+import {
+  Community,
+  GetCommunityResponse,
+  GetPersonDetails,
+  GetPersonDetailsResponse,
+  LemmyHttp,
+  Person,
+} from "lemmy-js-client";
 import client, { getAuth } from "../main";
 import { typeDiDependencyRegistryEngine } from "discordx";
 import CommunityService from "../services/communityService";
 
 export const extractInstanceFromActorId = (actorId: string) =>
-  actorId.match(/https?:\/\/(.*)\/(?:c|u|m)\/.*/)![1];
+/https?:\/\/(.*)\/(?:c|u|m|user)\/.*/.test(actorId) ? actorId.match(/https?:\/\/(.*)\/(?:c|u|m|user)\/.*/)![1] : actorId;
+
+  export const extractUserFromActorId = (actorId: string) =>
+  /https?:\/\/(.*)\/(?:c|u|m|user)\/(.*)/.test(actorId) ? actorId.match(/https?:\/\/(.*)\/(?:c|u|m|user)\/(.*)/)![2] : actorId;
+  
+export const getActorId = (instance: string, user: string) =>
+  `${user}@${instance}`;
 
 export function sleep(ms: number) {
   return new Promise((resolve) => {
@@ -12,17 +25,32 @@ export function sleep(ms: number) {
   });
 }
 
-export const instanceUrl = process.env.LEMMY_URL || "https://lemmy.world";
-
-export const isModOfCommunity = async (user: Person, community: Community) => {
-  if(user.admin) return true;
+export const isModOfCommunityPersonResponse = async (
+  user: GetPersonDetailsResponse,
+  communityId: number,
+  ) => {
+  if (user.person_view.person.admin) return true;
   try {
-    const response = await typeDiDependencyRegistryEngine.getService(CommunityService)?.getCommunity({
-      id: community.id,
-    });
-    if (!response) return false;
-    const modIds = response.moderators.map((mod) => mod.moderator.id);
-    return modIds.includes(user.id);
+    const modIds = user.moderates.map((mod) => mod.community.id);
+    return modIds.includes(communityId);
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
+};
+
+export const isModOfCommunityPerson = async (
+  user: Person,
+  communityId: number,
+) => {
+  if (user.admin) return true;
+  try {
+    const commService =
+      typeDiDependencyRegistryEngine.getService(CommunityService);
+    if (!commService) return false;
+    const person = await commService.getUser({ id: user.id }, false, client)
+    if (!person) return false;
+    return await isModOfCommunityPersonResponse(person, communityId);
   } catch (e) {
     console.log(e);
     return false;

@@ -79,6 +79,10 @@ class communityConfigService {
       where: { "community.id": { $eq: community.id } },
     });
   }
+
+  async updateCommunityConfig(config: communityConfigModel) {
+    return await this.repository.save(config);
+  }
 }
 
 export default communityConfigService;

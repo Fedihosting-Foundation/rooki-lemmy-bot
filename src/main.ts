@@ -8,8 +8,9 @@ import { LemmyHttp } from "lemmy-js-client";
 import Container, { Service } from "typedi";
 import manageService from "./services/manageService";
 import connection from "./connection";
-import { instanceUrl } from "./helpers/lemmyHelper";
 import timedPostService from "./services/timedPostService";
+import { startServer } from "./website";
+import config from "./config";
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -17,6 +18,10 @@ DIService.engine = typeDiDependencyRegistryEngine
 process.on("uncaughtException", (error) => {
   console.log("uncaught error:");
   console.log(error);
+
+  setTimeout(() => {
+    process.exit(1);
+  }, 5000);
 });
 
 export const bot = new Client({
@@ -61,7 +66,11 @@ bot.on("messageCreate", (message: Message) => {
   bot.executeCommand(message);
 });
 
-const client: LemmyHttp = new LemmyHttp(instanceUrl);
+const client: LemmyHttp = new LemmyHttp(config.lemmyInstance,{
+  headers:{
+    "User-Agent": "rooki-bot",
+  }
+});
 let jwt: string;
 
 export function getAuth() {
@@ -96,6 +105,7 @@ async function start() {
   const management = typeDiDependencyRegistryEngine.getService(manageService)!;
   const timedPost = typeDiDependencyRegistryEngine.getService(timedPostService)!;
   management.startTimers();
+  startServer()
 }
 
 start();

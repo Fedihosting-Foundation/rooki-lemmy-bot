@@ -10,8 +10,6 @@
 
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "declaration": true,
-    "declarationMap": true,
     "forceConsistentCasingInFileNames": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": false,
@@ -19,8 +17,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "allowJs": true,
-    "noEmit": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["build", "node_modules"]
+  "exclude": ["build", "node_modules", "src/website/frontend/**"]
 }

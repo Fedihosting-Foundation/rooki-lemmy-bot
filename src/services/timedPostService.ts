@@ -47,7 +47,7 @@ export default class timedPostService {
 
         this.configService.setExecuteTime(config.community, timedConfig.id);
       },
-      { name: `${config.community.id}-${timedConfig.id}` }
+      { name: `${config.community.id}-${timedConfig.id}`,timezone: "UTC"}
     );
     if (!timedConfig.enabled) job.stop();
     return job;

@@ -29,4 +29,13 @@ export default class communityConfigModel extends baseModel {
 
   @Column({ array: true })
   timedConfig: CommunityTimedConfig[] = [];
+
+  @Column()
+  modQueueSettings: {
+    enabled: boolean;
+    modQueueType: "active" | "passive"
+  } = {
+    enabled: false,
+    modQueueType: "passive"
+  };
 }

@@ -2,7 +2,19 @@ import { LemmyHttp } from "lemmy-js-client";
 import { LemmyCommand, getCommands } from "../decorators/lemmyPost";
 import { getAuth } from "../main";
 import { LemmyCommandArguments } from "../types/LemmyEvents";
-import { isModOfCommunity } from "../helpers/lemmyHelper";
+import { isModOfCommunityPerson } from "../helpers/lemmyHelper";
+import CommunityService from "../services/communityService";
+import { typeDiDependencyRegistryEngine } from "discordx";
+
+let communityServ: CommunityService | undefined;
+
+function getCommunityService() {
+  if (!communityServ) {
+    communityServ =
+      typeDiDependencyRegistryEngine.getService(CommunityService) || undefined;
+  }
+  return communityServ;
+}
 
 class helpCommand {
   @LemmyCommand({
@@ -13,9 +25,14 @@ class helpCommand {
     },
   })
   async help(client: LemmyHttp, event: LemmyCommandArguments) {
-    const isMod = await isModOfCommunity(
+    const service = getCommunityService();
+    if (!service) return;
+
+    const user = await service.getUser({ id: event.data.comment.creator_id });
+    if (!user) return;
+    const isMod = await isModOfCommunityPerson(
       event.data.creator,
-      event.data.community
+      event.data.community.id,
     );
     const commands = getCommands();
     const helpMessage = commands
@@ -42,7 +59,6 @@ class helpCommand {
       parent_id: event.data.comment.id,
       auth: getAuth(),
       post_id: event.data.post.id,
-      language_id: event.data.comment.language_id,
     });
   }
 }

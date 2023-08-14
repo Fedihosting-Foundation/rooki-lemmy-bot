@@ -24,7 +24,6 @@ class verifiedUserService {
         try {
           const discordUser = await getUser(user.discordUser.id);
           if (!discordUser) {
-            await this.repository.delete(user);
             return;
           }
           const lemmyUser = await this.communityService.getUser(
@@ -114,10 +113,10 @@ class verifiedUserService {
     );
   }
 
-  verifyCode(code: number) {
+  verifyCode(code: number, remove = true) {
     const index = this.codes.findIndex((c) => c.code === code);
     if (index < 0) return [];
-    return this.codes.splice(index, 1);
+    return remove ? this.codes.splice(index, 1) : [this.codes[index]];
   }
 
   createVerificationCode(person: Person) {

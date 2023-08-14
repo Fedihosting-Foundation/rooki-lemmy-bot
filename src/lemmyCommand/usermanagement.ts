@@ -1,8 +1,7 @@
 import { LemmyHttp } from "lemmy-js-client";
-import { LemmyCommand, getCommands } from "../decorators/lemmyPost";
+import { LemmyCommand } from "../decorators/lemmyPost";
 import { getAuth } from "../main";
 import { LemmyCommandArguments } from "../types/LemmyEvents";
-import { isModOfCommunity } from "../helpers/lemmyHelper";
 
 class usermanagementCommand {
   @LemmyCommand({
@@ -69,7 +68,7 @@ class usermanagementCommand {
         person_id: user.person_view.person.id,
         community_id: event.data.post.community_id,
         reason: `Ban Requested by ${event.data.creator.actor_id} -  with the reason: ${reason}`,
-        expires: duration,
+        expires: 	duration ? Math.floor(new Date().getTime()/1000.0) * (86400  * duration) : undefined,
         remove_data: deletePosts === "true",
         ban: true,
       });

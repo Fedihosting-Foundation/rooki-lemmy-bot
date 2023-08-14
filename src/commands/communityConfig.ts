@@ -96,10 +96,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -192,10 +192,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -360,10 +360,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -491,10 +491,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -615,10 +615,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -712,10 +712,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -788,10 +788,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -915,10 +915,10 @@ export default class CommunityConfigCommands {
       }
 
       if (
-        !await this.verifiedUserService.isModeratorOf(
+        !(await this.verifiedUserService.isModeratorOf(
           interaction.user,
           community.community_view.community.id
-        )
+        ))
       ) {
         await interaction.editReply(
           "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
@@ -974,6 +974,86 @@ export default class CommunityConfigCommands {
         type: PaginationType.SelectMenu,
       });
       await pagination.send();
+    } catch (exc) {
+      console.log(exc);
+      interaction.editReply("Something went wrong");
+    }
+  }
+
+  @Slash({
+    description: "Change the Mod Queue Settings",
+    name: "setmodsettings",
+  })
+  async setModSettings(
+    @SlashOption({
+      description:
+        "The community name ( the /c/--THISPART-- in the community URL )",
+      name: "communityname",
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    communityName: string,
+    @SlashOption({
+      description: "Is it enabled?",
+      name: "enabled",
+      required: true,
+      type: ApplicationCommandOptionType.Boolean,
+    })
+    enabled: boolean,
+    @SlashChoice({
+      name: "Active",
+      value: "active",
+    })
+    @SlashChoice({
+      name: "Passive",
+      value: "passive",
+    })
+    @SlashOption({
+      description: "What type of Mod Queue should be used?",
+      name: "type",
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    type: "active" | "passive",
+    interaction: CommandInteraction
+  ) {
+    await interaction.deferReply();
+    try {
+      const community = await this.communityService.getCommunity({
+        name: communityName,
+      });
+      if (!community) {
+        await interaction.editReply("Community not found!");
+        return;
+      }
+
+      if (
+        !(await this.verifiedUserService.isModeratorOf(
+          interaction.user,
+          community.community_view.community.id
+        ))
+      ) {
+        await interaction.editReply(
+          "You are not a moderator of this community! ( **If you didnt verified yourself already please do it with /verify** )!"
+        );
+        return;
+      }
+
+      const config = await this.communityConfigService.getCommunityConfig(
+        community.community_view.community
+      );
+      if (!config) {
+        await interaction.editReply(
+          `Community ${communityName} not found! Add the community first!`
+        );
+        return;
+      }
+      config.modQueueSettings.enabled = enabled;
+      config.modQueueSettings.modQueueType = type;
+      await this.communityConfigService.updateCommunityConfig(config);
+      await interaction.editReply(
+        `Updated the Mod Queue Settings for ${community.community_view.community.name}!`
+      );
     } catch (exc) {
       console.log(exc);
       interaction.editReply("Something went wrong");
