@@ -28,7 +28,7 @@ class modLogService {
       where: { userId: { $eq: user } },
       order: { createdAt: "DESC" },
     });
-    if (!forceRefresh) {
+    if (!forceRefresh && foundResults) {
       return foundResults;
     }
     const logs = await client.getModlog({

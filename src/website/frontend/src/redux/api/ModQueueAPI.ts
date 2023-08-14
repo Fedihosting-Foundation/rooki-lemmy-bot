@@ -18,10 +18,6 @@ const modQueueApi = createApi({
         headers.set("user", user);
       }
 
-      const instance =
-        localStorage.getItem("instance") || "https://lemmy.world";
-
-      headers.set("instance", instance);
       return headers;
     },
   }),
@@ -51,7 +47,7 @@ const modQueueApi = createApi({
     addModMessage: builder.mutation<
       IModQueueEntry<allowedEntries>,
       {
-        postId: number;
+        id: string;
         modNote: string;
       }
     >({

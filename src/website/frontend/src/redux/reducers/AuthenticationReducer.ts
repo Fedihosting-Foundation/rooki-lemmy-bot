@@ -17,13 +17,15 @@ const AuthenticationReducer = createSlice({
     setUser: (state, action: PayloadAction<GetPersonDetailsResponse>) => {
       state.user = action.payload;
     },
-    setInstance:(state, action: PayloadAction<string>) => {
-      state.instance = action.payload;
-    }
+    logoutUser: (state) => {
+      localStorage.removeItem("jwt");
+      localStorage.removeItem("personid");
+      state.user = undefined;
+    },
   },
 });
 
-export const { setUser } = AuthenticationReducer.actions;
+export const { setUser, logoutUser } = AuthenticationReducer.actions;
 export default AuthenticationReducer.reducer;
 
 export const selectUser = (state: RootState) => state.AuthenticationReducer.user;

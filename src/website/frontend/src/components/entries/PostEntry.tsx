@@ -49,14 +49,15 @@ import { useLazyGetModLogsQuery } from "../../redux/api/ModLogApi";
 import ExpandMore from "../ExpandMore";
 import { PostView } from "lemmy-js-client";
 
-
 const filter = createFilterOptions<{
   label?: string;
   value: string;
 }>();
 
-
-export const PostEntry = (props: { data: IModQueueEntry<PostView>; sx?: SxProps }) => {
+export const PostEntry = (props: {
+  data: IModQueueEntry<PostView>;
+  sx?: SxProps;
+}) => {
   const [result, setResult] = useState<QueueEntryResult | undefined>();
   const [refresh, { isLoading }] = useRefreshModMessageMutation();
   const [initiateModLogs, modLogsData] = useLazyGetModLogsQuery();
@@ -470,7 +471,10 @@ export const PostEntry = (props: { data: IModQueueEntry<PostView>; sx?: SxProps 
                   Object.entries(modLogsData.data.modLog!.entries)
                     .filter((x) => x[1].length > 0)
                     .map((entry) => (
-                      <Box key={entry[0] + Math.random()} sx={{ display: "flex" }}>
+                      <Box
+                        key={entry[0] + Math.random()}
+                        sx={{ display: "flex" }}
+                      >
                         <Typography variant="body2" mt={2} color="text.primary">
                           {entry[0]}:
                         </Typography>
@@ -500,7 +504,7 @@ export const PostEntry = (props: { data: IModQueueEntry<PostView>; sx?: SxProps 
           <Autocomplete
             autoFocus
             id="reason"
-            options={config.reasons.filter(x => !x.type || x.type === "Post")}
+            options={config.reasons.filter((x) => !x.type || x.type === "Post")}
             fullWidth
             selectOnFocus
             clearOnBlur
@@ -586,7 +590,7 @@ export const PostEntry = (props: { data: IModQueueEntry<PostView>; sx?: SxProps 
             onClick={() => {
               addModNote({
                 modNote: modNote,
-                postId: props.data.entry.post.id,
+                id: props.data.id,
               });
               setModNote("");
               setModNoteModalOpen(false);

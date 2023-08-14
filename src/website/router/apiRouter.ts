@@ -4,7 +4,7 @@ import { typeDiDependencyRegistryEngine } from "discordx";
 import { isModOfCommunityPerson } from "../../helpers/lemmyHelper";
 import CommunityService from "../../services/communityService";
 import postService from "../../services/postService";
-import client, { getAuth } from "../../main";
+import client from "../../main";
 import communityConfigService from "../../services/communityConfigService";
 import {
   QueueEntryResult,
@@ -15,14 +15,7 @@ import modLogService from "../../services/modLogService";
 import authMiddleware from "../middlewares/authMiddleware";
 import communityRouter from "./communityConfigApiRouter";
 import utilRouter from "./utilRouter";
-import {
-  CommentReportView,
-  CommentView,
-  Post,
-  PostReportView,
-  PostView,
-} from "lemmy-js-client";
-import { getLemmyClient } from "../../helpers/clientHelper";
+import { CommentReportView, PostReportView } from "lemmy-js-client";
 
 let modService: modQueueService | undefined;
 
@@ -96,12 +89,10 @@ apiRouter.get("/modqueue", async (req, res) => {
 
   const user = Number(headers.user);
 
-  const instance = headers.instance;
-
   const foundUser = await getCommunityService()?.getUser(
     { id: user },
     false,
-    getLemmyClient(instance as string)
+    client
   );
 
   if (!foundUser) {
@@ -111,7 +102,7 @@ apiRouter.get("/modqueue", async (req, res) => {
 
   const entries = (await service.getModQueueEntries()).filter((entry) => {
     return (
-      foundUser.person_view.person.admin ||
+      (foundUser.person_view.person.local && foundUser.person_view.person.admin) ||
       foundUser.moderates.some(
         (x) => x.community.id === entry.entry.community.id
       )
@@ -119,6 +110,7 @@ apiRouter.get("/modqueue", async (req, res) => {
   });
   res.json(entries);
 });
+
 apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -140,8 +132,9 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
     const foundUser = await getCommunityService()?.getUser(
       { id: user },
       false,
-      getLemmyClient(instance as string)
+      client
     );
+
     if (!foundUser) {
       res.status(401).send("User not found");
       return;
@@ -197,7 +190,11 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
 
     const instance = headers.instance;
 
-    const foundUser = await getCommunityService()?.getUser({ id: user }, false, getLemmyClient(instance as string));
+    const foundUser = await getCommunityService()?.getUser(
+      { id: user },
+      false,
+      client
+    );
 
     if (!foundUser) {
       res.status(401).send("User not found");
@@ -355,7 +352,7 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
         }
 
         setTimeout(async () => {
-          const result = await service.refreshModQueueEntry(entry);
+          await service.refreshModQueueEntry(entry);
         }, 5000);
         break;
       default:
@@ -402,40 +399,34 @@ apiRouter.put("/modqueue/addnote", async (req, res) => {
   try {
     const body = req.body;
     const headers = req.headers;
-    const token = headers.authorization?.split(" ")[1];
-    if (!token) {
-      res.status(401).send("No Token");
-      return;
-    }
-    const user = Number(headers.user);
-    if (!user) {
-      res.status(401).send("No User");
-      return;
-    }
 
-    const foundUser = await getCommunityService()?.getUser({ id: user });
+    const user = Number(headers.user);
+
+    const instance = headers.instance;
+
+    const foundUser = await getCommunityService()?.getUser(
+      { id: user },
+      false,
+      client
+    );
 
     if (!foundUser) {
       res.status(401).send("User not found");
       return;
     }
 
-    const post = await getPostService()?.getPost(body.postId);
-    if (!post) {
-      res.status(404).send("Post not found");
-      return;
-    }
-
-    if (
-      !isModOfCommunityPerson(foundUser.person_view.person, post.community.id)
-    ) {
-      res.status(401).send("User is not mod");
-      return;
-    }
-
-    const entry = await service.getModQueueEntryByPostId(post.post.id);
+    const entry = await service.getModQueueEntryByCommentReportId(body.id);
     if (!entry) {
       res.status(404).send("Entry not found");
+      return;
+    }
+    if (
+      !isModOfCommunityPerson(
+        foundUser.person_view.person,
+        entry.entry.community.id
+      )
+    ) {
+      res.status(401).send("User is not mod");
       return;
     }
 
@@ -451,18 +442,17 @@ apiRouter.put("/modqueue/addnote", async (req, res) => {
 
 apiRouter.post("/user/info", async (req, res) => {
   const headers = req.headers;
-  const token = headers.authorization?.split(" ")[1];
-  if (!token) {
-    res.status(401).send("No Token");
-    return;
-  }
-  const user = Number(headers.user);
-  if (!user) {
-    res.status(401).send("No User");
-    return;
-  }
+  const token = headers.authorization?.split(" ")[1]!;
 
-  const foundUser = await getCommunityService()?.getUser({ id: user });
+  const user = Number(headers.user);
+
+  const instance = headers.instance;
+
+  const foundUser = await getCommunityService()?.getUser(
+    { id: user },
+    false,
+    client
+  );
 
   if (!foundUser) {
     res.status(401).send("User not found");
@@ -477,15 +467,17 @@ apiRouter.post("/user/info", async (req, res) => {
   try {
     const userId = Number(req.body.userId);
     const communityId = Number(req.body.communityId);
-    const user = await service.getUser({ id: userId });
-    if (!user) {
+
+    const foundUser = await getCommunityService()?.getUser({ id: userId });
+
+    if (!foundUser) {
       res.status(404).send("User not found");
       return;
     }
 
     const modLogEntry = await modLogService?.getModLogEntriesForUser(
       token,
-      user.person_view.person.id,
+      foundUser.person_view.person.id,
       communityId
     );
     if (!modLogEntry) {
@@ -495,7 +487,7 @@ apiRouter.post("/user/info", async (req, res) => {
     const response: UserInfoResponse = {
       success: true,
       modLog: modLogEntry,
-      person: user,
+      person: foundUser,
     };
 
     res.json(response);
@@ -505,6 +497,7 @@ apiRouter.post("/user/info", async (req, res) => {
   }
 });
 
+// TODO
 apiRouter.post("/user/update", async (req, res) => {
   const body = req.body;
   const headers = req.headers;

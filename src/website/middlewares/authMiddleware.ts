@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import CommunityService from "../../services/communityService";
 import { typeDiDependencyRegistryEngine } from "discordx";
-import { getLemmyClient } from "../../helpers/clientHelper";
+import client from "../../main";
 let communityServ: CommunityService | undefined;
 
 function getCommunityService() {
@@ -27,14 +27,9 @@ const authMiddleware = async (
     res.status(401).send("No User");
     return;
   }
-  const instance = headers.instance;
-  if (!instance) {
-    res.status(401).send("No Instance");
-    return;
-  }
+ 
 
-
-  const foundUser = await getCommunityService()?.getUser({ id: user }, false, getLemmyClient(instance as string));
+  const foundUser = await getCommunityService()?.getUser({ id: user }, false, client);
 
   if (!foundUser) {
     res.status(401).send("User not found");

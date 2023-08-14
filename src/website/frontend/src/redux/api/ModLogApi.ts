@@ -14,9 +14,6 @@ const modLogApi = createApi({
       if (user) {
         headers.set("user", user);
       }
-      const instance = localStorage.getItem("instance") || "https://lemmy.world";
-
-      headers.set("instance", instance);
       return headers;
     },
   }),

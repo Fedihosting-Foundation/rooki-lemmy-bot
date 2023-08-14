@@ -5,17 +5,23 @@ import {
   ButtonStyle,
   CommandInteraction,
   ComponentType,
+  Guild,
 } from "discord.js";
 import { Discord, Slash, SlashOption } from "discordx";
 import client, { getAuth } from "../main";
 import LogHelper from "../helpers/logHelper";
 import verifiedUserService from "../services/verifiedUserService";
 import { Inject } from "typedi";
+import communityConfigService from "../services/communityConfigService";
 
 @Discord()
 export default class VerifyCommands {
   @Inject()
   verifiedUserService: verifiedUserService;
+
+  @Inject()
+  communityConfigService: communityConfigService;
+
   @Slash({ description: "Verify a lemmy account", name: "verify" })
   async verify(
     @SlashOption({

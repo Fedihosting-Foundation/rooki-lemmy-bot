@@ -172,7 +172,7 @@ export const ReportEntry = (props: {
               }}
               variant="h4"
             >
-              {props.data.entry.post.name}
+              {isCommentReport ? "Comment Report" : "Post Report"}
             </Typography>
 
             {props.data.result ? (
@@ -262,23 +262,6 @@ export const ReportEntry = (props: {
         }
       />
       <Collapse in={postExpanded} timeout="auto" unmountOnExit>
-        {props.data.entry.post.thumbnail_url ? (
-          <Box
-            sx={{
-              position: "relative",
-            }}
-          >
-            <Spotlight>
-              <CardMedia
-                component="img"
-                image={props.data.entry.post.thumbnail_url}
-                alt="Thumbnail Url"
-              />
-            </Spotlight>
-          </Box>
-        ) : (
-          <></>
-        )}
         <Box sx={{ pl: "25px", pt: "10px" }}>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 0 }}>
             With the reason:
@@ -528,7 +511,7 @@ export const ReportEntry = (props: {
             onClick={() => {
               addModNote({
                 modNote: modNote,
-                postId: props.data.entry.post.id,
+                id: props.data.id,
               });
               setModNote("");
               setModNoteModalOpen(false);

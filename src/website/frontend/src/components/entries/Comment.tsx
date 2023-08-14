@@ -61,7 +61,6 @@ export const CommentCard = (props: {
             <Typography
               sx={{
                 mr: "15px",
-                //   textDecoration: deleted || removed ? "line-through" : "none",
                 textDecorationColor: "red",
                 textDecorationThickness: "5px",
                 cursor: "pointer",

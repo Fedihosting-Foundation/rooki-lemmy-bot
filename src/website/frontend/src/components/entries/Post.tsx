@@ -4,6 +4,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  CardMedia,
   SxProps,
   Typography,
 } from "@mui/material";
@@ -14,6 +15,7 @@ import { extractInstanceFromActorId, getActorId } from "../../util/utils";
 import { Community, Post } from "lemmy-js-client";
 import { useGetPersonQuery } from "../../redux/api/UtilApi";
 import ReactMarkdown from "react-markdown";
+import Spotlight from "../Spotlight";
 
 export const PostCard = (props: {
   data: { entry: Post; community: Community };
@@ -31,7 +33,7 @@ export const PostCard = (props: {
       </Card>
     );
   return (
-    <Card sx={{ ...props.sx }}  elevation={props.elevation}>
+    <Card sx={{ ...props.sx }} elevation={props.elevation}>
       <CardHeader
         avatar={
           <Box
@@ -147,6 +149,23 @@ export const PostCard = (props: {
         }
       />
       <CardContent>
+        {props.data.entry.thumbnail_url ? (
+          <Box
+            sx={{
+              position: "relative",
+            }}
+          >
+            <Spotlight>
+              <CardMedia
+                component="img"
+                image={props.data.entry.thumbnail_url}
+                alt="Thumbnail Url"
+              />
+            </Spotlight>
+          </Box>
+        ) : (
+          <></>
+        )}
         {props.data.entry.body ? (
           <ReactMarkdown children={props.data.entry.body} />
         ) : (

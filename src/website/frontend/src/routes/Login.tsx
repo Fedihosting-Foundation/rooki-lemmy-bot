@@ -13,7 +13,6 @@ import { useAppDispatch } from "../redux/hooks";
 import { setUser } from "../redux/reducers/AuthenticationReducer";
 
 export default function Login() {
-  const [instance, setInstance] = useState<string>("https://lemmy.world");
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [mfa, setMfa] = useState<string | undefined>();
@@ -23,18 +22,10 @@ export default function Login() {
   >(null);
 
   const login = async () => {
-    if(!instance || !username || !password) {
+    if( !username || !password) {
       setAlert({
         severity: "error",
         alertContent: "Please fill out all fields",
-      });
-      return;
-    };
-
-    if(!instance.startsWith("https://") || instance.trim() === "https://") {
-      setAlert({
-        severity: "error",
-        alertContent: "Instance must start with https:// and be a valid URL",
       });
       return;
     };
@@ -45,7 +36,7 @@ export default function Login() {
         username_or_email: username,
         totp_2fa_token: mfa,
       });
-      if (!response.jwt) {
+      if (!response || !response.jwt) {
         setAlert({
           severity: "error",
           alertContent:
@@ -58,18 +49,30 @@ export default function Login() {
         auth: response.jwt,
       });
 
-      if (!site.my_user) return;
+      if (!site.my_user) {
+        setAlert({
+          severity: "error",
+          alertContent:
+            "Login failed ( Email/Username, Password or not verification incorrect or incomplete )",
+        });
 
-      localStorage.setItem("instance", instance);
+        return};
 
       localStorage.setItem(
         "personid",
         String(site.my_user.local_user_view.person.id)
       );
-      const user = await client.getPersonDetails({
+      const user = await client?.getPersonDetails({
         auth: response.jwt,
         person_id: site.my_user.local_user_view.person.id,
       });
+      if(!user){
+        setAlert({
+          severity: "error",
+          alertContent: "User not found.",
+        });
+        return;
+      }
       dispatch(setUser(user));
     } catch (e: any) {
       console.log(e);
@@ -102,15 +105,6 @@ export default function Login() {
         spacing={2}
         container
       >
-        <Grid xs={12} item>
-          <TextField
-            onChange={(ev) => {
-              setInstance(ev.target.value);
-            }}
-            label="Instance:"
-            defaultValue={"https://lemmy.world"}
-          ></TextField>
-        </Grid>
         <Grid xs={12} item>
           <TextField
             onChange={(ev) => {

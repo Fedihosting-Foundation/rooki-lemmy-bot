@@ -129,6 +129,7 @@ class reportService extends baseService<
         const postResult = await client.listPostReports({
           auth: getAuth(),
           page: i,
+          unresolved_only: false
         });
         console.log("Fetched Post Reports");
         this.push(...postResult.post_reports);
@@ -137,6 +138,7 @@ class reportService extends baseService<
         const commentResult = await client.listCommentReports({
           auth: getAuth(),
           page: i,
+          unresolved_only: false
         });
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);

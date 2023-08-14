@@ -77,7 +77,7 @@ class modQueueService {
   async refreshModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
     console.log("REFRESHING MOD QUEUE ENTRY", data);
     if ("comment_report" in data.entry) {
-      const list = (await client.listCommentReports({ auth: getAuth(), unresolved_only: false }))
+      const list = (await client.listCommentReports({ auth: getAuth(), unresolved_only: false, community_id: data.entry.community.id }))
         .comment_reports;
       await asyncForEach(list, async (report) => {
         const foundReport = await this.getModQueueEntryByCommentReportId(
@@ -86,11 +86,15 @@ class modQueueService {
         if (foundReport) {
           foundReport.entry = report;
           await this.updateModQueueEntry(foundReport);
+        }else{
+          console.log("NOT FOUND REPORT Creating:", report)
+          await this.addModQueueEntry(report)
         }
+      
       });
       return;
     } else if ("post_report" in data.entry) {
-      const list = (await client.listPostReports({ auth: getAuth(), unresolved_only: false }))
+      const list = (await client.listPostReports({ auth: getAuth(), unresolved_only: false, community_id: data.entry.community.id }))
         .post_reports;
         console.log("UPADTING POST REPORT")
       await asyncForEach(list, async (report) => {
@@ -101,6 +105,9 @@ class modQueueService {
         if (foundReport) {
           foundReport.entry = report;
           await this.updateModQueueEntry(foundReport);
+        }else{
+          console.log("NOT FOUND REPORT Creating:", report)
+          await this.addModQueueEntry(report)
         }
       });
 

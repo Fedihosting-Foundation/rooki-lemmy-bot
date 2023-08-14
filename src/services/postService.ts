@@ -93,7 +93,7 @@ class postService extends baseService<PostView, postViewModel> {
 
   async getPost(id: number, force: boolean = false) {
     if (!force && this.postCache[id]) return this.postCache[id];
-    if (force) {
+    if (!force) {
       const dbPost = await this.repository.findOne({
         where: { "post.id": { $eq: id } },
       });

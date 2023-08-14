@@ -32,7 +32,7 @@ class helpCommand {
     if (!user) return;
     const isMod = await isModOfCommunityPerson(
       event.data.creator,
-      event.data.community.id
+      event.data.community.id,
     );
     const commands = getCommands();
     const helpMessage = commands

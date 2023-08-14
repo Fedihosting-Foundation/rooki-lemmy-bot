@@ -106,7 +106,6 @@ async function start() {
   const timedPost = typeDiDependencyRegistryEngine.getService(timedPostService)!;
   management.startTimers();
   startServer()
-  
 }
 
 start();

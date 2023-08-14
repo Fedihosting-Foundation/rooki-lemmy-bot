@@ -1,5 +1,4 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import IUserInfoResponse from "../../models/IUserInfoResponse";
 import { GetPersonDetailsResponse } from "lemmy-js-client";
 const utilApi = createApi({
   reducerPath: "utilApi",
@@ -15,6 +14,7 @@ const utilApi = createApi({
       if (user) {
         headers.set("user", user);
       }
+      
       return headers;
     },
   }),

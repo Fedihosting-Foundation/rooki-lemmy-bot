@@ -15,6 +15,7 @@ import { useWindowSize } from "../util/utils";
 import { PostEntry } from "../components/entries/PostEntry";
 import { ReportEntry } from "../components/entries/ReportEntry";
 import { CommentReportView, PostReportView, PostView } from "lemmy-js-client";
+import { logoutUser } from "../redux/reducers/AuthenticationReducer";
 
 export const ModQueue = () => {
   const dispatch = useAppDispatch();
@@ -58,7 +59,7 @@ export const ModQueue = () => {
     data.reverse();
 
     data = data.filter((x) => {
-      return !showOnlyOpenTasks || !IModQueueUtils.isDone(x)
+      return !showOnlyOpenTasks || !IModQueueUtils.isDone(x);
     });
 
     if (data.length < newH) newH = data.length;
@@ -102,7 +103,7 @@ export const ModQueue = () => {
           !("post_report" in entry.entry) &&
           !("comment_report" in entry.entry) ? (
             <PostEntry
-              key={"PostEntry" +entry.entry.post.id}
+              key={"PostEntry" + entry.entry.post.id}
               data={entry as IModQueueEntry<PostView>}
               sx={{
                 ...props,
@@ -114,7 +115,15 @@ export const ModQueue = () => {
             />
           ) : (
             <ReportEntry
-              key={"ReportEntry" + ("post_report" in entry.entry ? entry.entry.post_report.id : entry.entry.comment_report.id) + ("post_report" in entry.entry ? "post_report" : "comment_report")}
+              key={
+                "ReportEntry" +
+                ("post_report" in entry.entry
+                  ? entry.entry.post_report.id
+                  : entry.entry.comment_report.id) +
+                ("post_report" in entry.entry
+                  ? "post_report"
+                  : "comment_report")
+              }
               data={entry as IModQueueEntry<CommentReportView | PostReportView>}
               sx={{
                 ...props,
@@ -155,34 +164,59 @@ export const ModQueue = () => {
       <Box
         sx={{
           position: "fixed",
-          display: "inline-flex",
-          flexDirection: "row",
-          flexWrap: "wrap",
+
           top: "5px",
-          right: "5px",
+          right: "25px",
           p: "5px",
           maxWidth: width > 1500 ? "100%" : "250px",
           borderRadius: "10px",
           backgroundColor: "rgba(0,0,0,0.75)",
         }}
       >
-        <FormControlLabel
-          control={<Switch />}
-          onChange={(ev, checked) => {
-            handleShowOnlyOpenTasks(checked);
+        <Box
+          sx={{
+            display: "inline-flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
           }}
-          checked={showOnlyOpenTasks}
-          label="Show only Open Tasks"
-        />
+        >
+          <FormControlLabel
+            control={<Switch />}
+            onChange={(ev, checked) => {
+              handleShowOnlyOpenTasks(checked);
+            }}
+            checked={showOnlyOpenTasks}
+            label="Show only Open Tasks"
+          />
 
-        <FormControlLabel
-          control={<Switch />}
-          onChange={(ev, checked) => {
-            dispatch(setSpotlight(checked));
+          <FormControlLabel
+            control={<Switch />}
+            onChange={(ev, checked) => {
+              dispatch(setSpotlight(checked));
+            }}
+            checked={spotlight}
+            label="Enable Spotlight"
+          />
+        </Box>
+        <Box
+          sx={{
+            width: "100%",
           }}
-          checked={spotlight}
-          label="Enable Spotlight"
-        />
+        >
+          <Button
+            sx={{
+              width: "100%",
+              mt: "10px",
+              height: "25px",
+            }}
+            variant="outlined"
+            onClick={() => {
+              console.log("logout");
+              dispatch(logoutUser());
+            }}
+          
+          >Logout</Button>
+        </Box>
       </Box>
     </Box>
   );

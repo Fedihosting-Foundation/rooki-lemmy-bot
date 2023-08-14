@@ -3,6 +3,7 @@ import {
   GetCommunityResponse,
   GetPersonDetails,
   GetPersonDetailsResponse,
+  LemmyHttp,
   Person,
 } from "lemmy-js-client";
 import client, { getAuth } from "../main";
@@ -26,8 +27,8 @@ export function sleep(ms: number) {
 
 export const isModOfCommunityPersonResponse = async (
   user: GetPersonDetailsResponse,
-  communityId: number
-) => {
+  communityId: number,
+  ) => {
   if (user.person_view.person.admin) return true;
   try {
     const modIds = user.moderates.map((mod) => mod.community.id);
@@ -40,17 +41,16 @@ export const isModOfCommunityPersonResponse = async (
 
 export const isModOfCommunityPerson = async (
   user: Person,
-  communityId: number
+  communityId: number,
 ) => {
   if (user.admin) return true;
   try {
     const commService =
       typeDiDependencyRegistryEngine.getService(CommunityService);
     if (!commService) return false;
-    const modIds = (await commService.getUser({ id: user.id }))?.moderates.map(
-      (mod) => mod.community.id
-    );
-    return modIds?.includes(communityId) === true;
+    const person = await commService.getUser({ id: user.id }, false, client)
+    if (!person) return false;
+    return await isModOfCommunityPersonResponse(person, communityId);
   } catch (e) {
     console.log(e);
     return false;
