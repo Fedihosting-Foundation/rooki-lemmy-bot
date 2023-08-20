@@ -1,7 +1,10 @@
 import express from "express";
 import modQueueService from "../../services/modQueueService";
 import { typeDiDependencyRegistryEngine } from "discordx";
-import { isModOfCommunityPerson } from "../../helpers/lemmyHelper";
+import {
+  isModOfCommunityPerson,
+  isModOfCommunityPersonResponse,
+} from "../../helpers/lemmyHelper";
 import CommunityService from "../../services/communityService";
 import postService from "../../services/postService";
 import client from "../../main";
@@ -13,9 +16,10 @@ import {
 import UserInfoResponse from "../../models/userInfoResponse";
 import modLogService from "../../services/modLogService";
 import authMiddleware from "../middlewares/authMiddleware";
-import communityRouter from "./communityConfigApiRouter";
+import communityConfigRouter from "./communityConfigApiRouter";
 import utilRouter from "./utilRouter";
 import { CommentReportView, PostReportView } from "lemmy-js-client";
+import { asyncFilter } from "../../utils/AsyncFilter";
 
 let modService: modQueueService | undefined;
 
@@ -77,40 +81,58 @@ apiRouter.get("/test", async (req, res) => {
 apiRouter.use(authMiddleware);
 
 apiRouter.use("/utils", utilRouter);
-apiRouter.use("/community", communityRouter);
+apiRouter.use("/config", communityConfigRouter);
 
-apiRouter.get("/modqueue", async (req, res) => {
+apiRouter.post("/modqueue", async (req, res) => {
   const service = getModQueueService();
   if (!service) {
     res.status(500).send("Service not found");
     return;
   }
-  const headers = req.headers;
+  const user = req.personDetails;
 
-  const user = Number(headers.user);
-
-  const foundUser = await getCommunityService()?.getUser(
-    { id: user },
-    false,
-    client
-  );
-
-  if (!foundUser) {
+  if (!user) {
     res.status(401).send("User not found");
     return;
   }
 
-  const entries = (await service.getModQueueEntries()).filter((entry) => {
-    return (
-      (foundUser.person_view.person.local && foundUser.person_view.person.admin) ||
-      foundUser.moderates.some(
-        (x) => x.community.id === entry.entry.community.id
-      )
-    );
-  });
+  const body = req.body as {id: string | undefined, communities: number[] };
+
+
+  const entries = await service.getModQueueEntriesAfterId(body.id, body.communities.length > 0 ? (user.local_user_view.person.admin ? body.communities : user.moderates.map(x => x.community.id).filter(x => body.communities.includes(x)) ) : (user.local_user_view.person.admin ? false : user.moderates.map(x => x.community.id)), 20);
   res.json(entries);
 });
+apiRouter.get("/modqueue/getone/:id", async (req, res) => {
+  const service = getModQueueService();
+  if (!service) {
+    res.status(500).send("Service not found");
+    return;
+  }
+  const user = req.personDetails;
 
+  if (!user) {
+    res.status(401).send("User not found");
+    return;
+  }
+
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send("No id given!");
+    return;
+  }
+
+  const entry = await service.getModQueueEntryById(id);
+
+  if (!entry) {
+    res.status(404).send("Entry not found");
+    return;
+  }
+
+  if (!(await isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
+    res.status(401).send("User is not mod");
+    return;
+  }
+});
 apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -124,18 +146,10 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
       res.status(500).send("Service not found");
       return;
     }
-    const headers = req.headers;
-    const user = Number(headers.user);
 
-    const instance = headers.instance;
+    const user = req.personDetails;
 
-    const foundUser = await getCommunityService()?.getUser(
-      { id: user },
-      false,
-      client
-    );
-
-    if (!foundUser) {
+    if (!user) {
       res.status(401).send("User not found");
       return;
     }
@@ -148,17 +162,14 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
     }
 
     if (
-      !isModOfCommunityPerson(
-        foundUser.person_view.person,
-        entry.entry.community.id
-      )
+      !(await isModOfCommunityPersonResponse(user, entry.entry.community.id))
     ) {
       res.status(401).send("User is not mod");
       return;
     }
 
     const config = await getCommunityConfigService()?.getCommunityConfig(
-      entry.entry.community
+      entry.entry.community.id
     );
 
     if (!config) {
@@ -184,19 +195,11 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
     const body = req.body;
     const reason = body.reason || "No Reason given";
     const headers = req.headers;
+
     const token = headers.authorization?.split(" ")[1] as string;
+    const user = req.personDetails;
 
-    const user = Number(headers.user);
-
-    const instance = headers.instance;
-
-    const foundUser = await getCommunityService()?.getUser(
-      { id: user },
-      false,
-      client
-    );
-
-    if (!foundUser) {
+    if (!user) {
       res.status(401).send("User not found");
       return;
     }
@@ -205,12 +208,7 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
       res.status(404).send("Entry not found");
       return;
     }
-    if (
-      !isModOfCommunityPerson(
-        foundUser.person_view.person,
-        entry.entry.community.id
-      )
-    ) {
+    if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
       res.status(401).send("User is not mod");
       return;
     }
@@ -221,7 +219,7 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
     const isCommentReport = "comment_report" in entry.entry;
 
     const config = await getCommunityConfigService()?.getCommunityConfig(
-      entry.entry.community
+      entry.entry.community.id
     );
 
     if (!config) {
@@ -372,14 +370,24 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
     );
 
     entry.resultData = {
-      modId: user,
+      modId: user.local_user_view.person.id,
       reason: reason,
     };
 
     entry.modNote = entry.modNote || [];
 
+    const person = await getCommunityService()?.getUser(
+      { id: user.local_user_view.person.id },
+      false,
+      client
+    );
+    if (!person) {
+      res.status(404).send("User not found");
+      return;
+    }
+
     entry.modNote.push({
-      person: foundUser.person_view,
+      person: person?.person_view!,
       note: `${body.result || "reopened"} - ${reason}`,
     });
 
@@ -398,40 +406,35 @@ apiRouter.put("/modqueue/addnote", async (req, res) => {
   }
   try {
     const body = req.body;
-    const headers = req.headers;
 
-    const user = Number(headers.user);
+    const user = req.personDetails;
 
-    const instance = headers.instance;
-
-    const foundUser = await getCommunityService()?.getUser(
-      { id: user },
-      false,
-      client
-    );
-
-    if (!foundUser) {
+    if (!user) {
       res.status(401).send("User not found");
       return;
     }
 
-    const entry = await service.getModQueueEntryByCommentReportId(body.id);
+    const entry = await service.getModQueueEntryById(body.id);
     if (!entry) {
       res.status(404).send("Entry not found");
       return;
     }
-    if (
-      !isModOfCommunityPerson(
-        foundUser.person_view.person,
-        entry.entry.community.id
-      )
-    ) {
+    if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
       res.status(401).send("User is not mod");
+      return;
+    }
+    const person = await getCommunityService()?.getUser(
+      { id: user.local_user_view.person.id },
+      false,
+      client
+    );
+    if (!person) {
+      res.status(404).send("User not found");
       return;
     }
 
     entry.modNote = entry.modNote || [];
-    entry.modNote.push({ person: foundUser.person_view, note: body.modNote });
+    entry.modNote.push({ person: person.person_view, note: body.modNote });
 
     res.json(await service.updateModQueueEntry(entry));
   } catch (e) {
@@ -444,17 +447,9 @@ apiRouter.post("/user/info", async (req, res) => {
   const headers = req.headers;
   const token = headers.authorization?.split(" ")[1]!;
 
-  const user = Number(headers.user);
+  const user = req.personDetails;
 
-  const instance = headers.instance;
-
-  const foundUser = await getCommunityService()?.getUser(
-    { id: user },
-    false,
-    client
-  );
-
-  if (!foundUser) {
+  if (!user) {
     res.status(401).send("User not found");
     return;
   }
@@ -506,13 +501,10 @@ apiRouter.post("/user/update", async (req, res) => {
     res.status(401).send("No Token");
     return;
   }
-  const user = Number(headers.user);
-  if (!user) {
-    res.status(401).send("No User");
-    return;
-  }
 
-  const foundUser = await getCommunityService()?.getUser({ id: user });
+  const user = req.personDetails;
+
+  const foundUser = user?.local_user_view.person;
 
   if (!foundUser) {
     res.status(401).send("User not found");

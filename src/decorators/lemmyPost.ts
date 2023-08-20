@@ -3,7 +3,7 @@ import { ILemmyCommand, LemmyEvents } from "../types/LemmyEvents";
 const events: { data: ILemmyOn; fn: (...args: any) => Promise<unknown> }[] = [];
 
 
-export function Lemmy<T extends { new(...args: any[]): {} }>(Base: T) {
+export function Lemmy<T extends { new(...args: any[]): any }>(Base: T) {
   return class extends Base {
     constructor(...args: any[]) {
       super(...args);

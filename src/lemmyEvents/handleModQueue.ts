@@ -76,9 +76,8 @@ class ModQueueHandler {
   async handleCommentReport(
     event: LemmyEventArguments<commentReportViewModel>
   ) {
-    console.log("Handling MODQUEUE REPORT")
     const modQueueSettings = event.config?.modQueueSettings;
-    console.log("MODQUEUE: ", modQueueSettings)
+
     if (!modQueueSettings || !modQueueSettings.enabled) return;
 
     const report = event.data;

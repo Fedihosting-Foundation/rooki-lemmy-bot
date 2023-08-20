@@ -22,13 +22,13 @@ export default function Login() {
   >(null);
 
   const login = async () => {
-    if( !username || !password) {
+    if (!username || !password) {
       setAlert({
         severity: "error",
         alertContent: "Please fill out all fields",
       });
       return;
-    };
+    }
 
     try {
       const response = await client.login({
@@ -40,7 +40,7 @@ export default function Login() {
         setAlert({
           severity: "error",
           alertContent:
-            "Login failed ( Email/Username, Password or not verification incorrect or incomplete )",
+            "Login failed ( Email/Username, Password or 2FA incorrect )",
         });
         return;
       }
@@ -53,10 +53,11 @@ export default function Login() {
         setAlert({
           severity: "error",
           alertContent:
-            "Login failed ( Email/Username, Password or not verification incorrect or incomplete )",
+            "Login failed ( Email/Username, Password or 2FA incorrect )",
         });
 
-        return};
+        return;
+      }
 
       localStorage.setItem(
         "personid",
@@ -66,7 +67,7 @@ export default function Login() {
         auth: response.jwt,
         person_id: site.my_user.local_user_view.person.id,
       });
-      if(!user){
+      if (!user) {
         setAlert({
           severity: "error",
           alertContent: "User not found.",

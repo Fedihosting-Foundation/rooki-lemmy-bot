@@ -16,9 +16,15 @@ export default class timedPostService {
       this.configService.repository.findAll().then((configs) => {
         configs.forEach((config) => {
           config.timedConfig.forEach(async (timedConfig) => {
-            this.addCronJob(config, timedConfig);
+            try{
+              await this.addCronJob(config, timedConfig);
+            }catch(ex) {
+              console.log(ex);
+            }
           });
         });
+      }).catch((err) => {
+        console.log(err);
       });
     }, 1000 * 5);
   }
@@ -45,7 +51,12 @@ export default class timedPostService {
           language_id: timedConfig.language_id,
         });
 
-        this.configService.setExecuteTime(config.community, timedConfig.id);
+        try{
+          await this.configService.setExecuteTime(config.community, timedConfig.id);
+        }
+        catch(err){
+          console.log(err);
+        }
       },
       { name: `${config.community.id}-${timedConfig.id}`,timezone: "UTC"}
     );

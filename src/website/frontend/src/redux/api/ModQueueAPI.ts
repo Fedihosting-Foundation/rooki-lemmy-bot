@@ -3,6 +3,19 @@ import IModQueueEntry, {
   QueueEntryResult,
   allowedEntries,
 } from "../../models/IModeQueueEntry";
+
+function providesList<R extends { id: string | number }[], T extends string>(
+  resultsWithIds: R | undefined,
+  tagType: T
+) {
+  return resultsWithIds
+    ? [
+        { type: tagType, id: "LIST" },
+        ...resultsWithIds.map(({ id }) => ({ type: tagType, id })),
+      ]
+    : [{ type: tagType, id: "LIST" }];
+}
+
 const modQueueApi = createApi({
   reducerPath: "modqueue",
   baseQuery: fetchBaseQuery({
@@ -13,21 +26,28 @@ const modQueueApi = createApi({
         headers.set("authorization", `Bearer ${token}`);
       }
 
-      const user = localStorage.getItem("personid");
-      if (user) {
-        headers.set("user", user);
-      }
-
       return headers;
     },
   }),
   tagTypes: ["modqueue"],
   refetchOnFocus: true,
   refetchOnReconnect: true,
+  refetchOnMountOrArgChange: 30,
   endpoints: (builder) => ({
-    getModqueue: builder.query<IModQueueEntry<allowedEntries>[], void>({
-      query: () => `/modqueue`,
-      providesTags: ["modqueue"],
+    getModqueueEntry: builder.query<IModQueueEntry<allowedEntries>, string>({
+      query: (postId) => `/modqueue/getone/${postId}`,
+      providesTags: (result, error, arg) => [{ type: "modqueue", id: arg }],
+    }),
+    getModqueue: builder.query<
+      IModQueueEntry<allowedEntries>[],
+      { id: string | undefined; communities: number[] }
+    >({
+      query: (options) => ({
+        url: `/modqueue`,
+        method: "POST",
+        body: options,
+      }),
+      providesTags: (result) => providesList(result, "modqueue"),
     }),
     updateModqueue: builder.mutation<
       IModQueueEntry<allowedEntries>,
@@ -42,7 +62,9 @@ const modQueueApi = createApi({
         method: "PUT",
         body,
       }),
-      invalidatesTags: ["modqueue"],
+      invalidatesTags: (result, error, arg) => [
+        { type: "modqueue", id: arg.id },
+      ],
     }),
     addModMessage: builder.mutation<
       IModQueueEntry<allowedEntries>,
@@ -56,12 +78,16 @@ const modQueueApi = createApi({
         method: "PUT",
         body,
       }),
-      invalidatesTags: ["modqueue"],
+      invalidatesTags: (result, error, arg) => [
+        { type: "modqueue", id: arg.id },
+      ],
     }),
     refreshModMessage: builder.mutation<IModQueueEntry<allowedEntries>, string>(
       {
         query: (postId) => `/modqueue/refresh/${postId}`,
-        invalidatesTags: ["modqueue"],
+        invalidatesTags: (result, error, arg) => [
+          { type: "modqueue", id: arg },
+        ],
       }
     ),
   }),
@@ -69,7 +95,7 @@ const modQueueApi = createApi({
 
 export const {
   useRefreshModMessageMutation,
-  useGetModqueueQuery,
+  useLazyGetModqueueQuery,
   useUpdateModqueueMutation,
   useAddModMessageMutation,
 } = modQueueApi;

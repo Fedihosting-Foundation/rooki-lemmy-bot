@@ -122,7 +122,7 @@ export default class communityTimedConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -155,11 +155,11 @@ export default class communityTimedConfigCommands {
         timedConfig
       );
 
-      this.timedPostService.addCronJob(config, newTimedConfig);
+      await this.timedPostService.addCronJob(config, newTimedConfig);
       await interaction.editReply("Timed Post added!");
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await await interaction.editReply("Something went wrong");
     }
   }
 
@@ -205,7 +205,7 @@ export default class communityTimedConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -219,7 +219,7 @@ export default class communityTimedConfigCommands {
         await interaction.editReply("Timed Post not found!");
         return;
       }
-      this.timedPostService.removeCronJob(config, timedConfig[index]);
+      await this.timedPostService.removeCronJob(config, timedConfig[index]);
       timedConfig.splice(index, 1);
       await this.communityConfigService.updateTimedPostsOptions(
         community.community_view.community,
@@ -229,7 +229,7 @@ export default class communityTimedConfigCommands {
       await interaction.editReply("Timed Post removed!");
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await await interaction.editReply("Something went wrong");
     }
   }
 
@@ -275,7 +275,7 @@ export default class communityTimedConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -300,7 +300,7 @@ export default class communityTimedConfigCommands {
       await interaction.editReply("Timed Post enabled!");
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -346,7 +346,7 @@ export default class communityTimedConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -369,7 +369,7 @@ export default class communityTimedConfigCommands {
       await interaction.editReply("Timed Post disabled!");
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -451,7 +451,7 @@ export default class communityTimedConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -486,13 +486,13 @@ export default class communityTimedConfigCommands {
         timedConfig
       );
 
-      this.timedPostService.removeCronJob(config, timedConfig[index]);
-      this.timedPostService.addCronJob(config, timedConfig[index]);
+      await this.timedPostService.removeCronJob(config, timedConfig[index]);
+      await this.timedPostService.addCronJob(config, timedConfig[index]);
 
       await interaction.editReply("Timed Post updated!");
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -531,7 +531,7 @@ export default class communityTimedConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -578,7 +578,7 @@ export default class communityTimedConfigCommands {
       await pagination.send();
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 }

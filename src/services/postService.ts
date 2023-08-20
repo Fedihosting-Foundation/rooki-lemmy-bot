@@ -29,7 +29,7 @@ class postService extends baseService<PostView, postViewModel> {
         const post = input as PostView;
         try {
           const config = await this.CommunityConfigService.getCommunityConfig(
-            post.community
+            post.community.id
           );
           if (!config) return;
           const foundPost = await this.repository.findOne({
@@ -71,7 +71,7 @@ class postService extends baseService<PostView, postViewModel> {
 
   async fetchAndUpdate() {
     const posts: PostView[] = [];
-    for (const community of await this.CommunityConfigService.getCommunities()) {
+    for (const community of await this.CommunityConfigService.getCommunityConfigs()) {
       try {
         const result = await client.getPosts({
           community_id: community.community.id,
@@ -83,7 +83,7 @@ class postService extends baseService<PostView, postViewModel> {
         this.push(...result.posts);
         posts.push(...result.posts);
       } catch (e) {
-        console.log("Post Fetch Error")
+        console.log("Post Fetch Error");
         console.log(e);
       }
       await sleep(10000);

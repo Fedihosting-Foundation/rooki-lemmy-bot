@@ -11,6 +11,7 @@ import connection from "./connection";
 import timedPostService from "./services/timedPostService";
 import { startServer } from "./website";
 import config from "./config";
+import modQueueService from "./services/modQueueService";
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -58,12 +59,12 @@ bot.once("ready", async () => {
   console.log("Bot started");
 });
 
-bot.on("interactionCreate", (interaction: Interaction) => {
-  bot.executeInteraction(interaction);
+bot.on("interactionCreate", async (interaction: Interaction) => {
+  await bot.executeInteraction(interaction);
 });
 
-bot.on("messageCreate", (message: Message) => {
-  bot.executeCommand(message);
+bot.on("messageCreate", async (message: Message) => {
+  await bot.executeCommand(message);
 });
 
 const client: LemmyHttp = new LemmyHttp(config.lemmyInstance,{
@@ -108,6 +109,6 @@ async function start() {
   startServer()
 }
 
-start();
+start().catch(x => console.error(x));
 
 export default client;

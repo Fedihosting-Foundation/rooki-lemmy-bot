@@ -10,10 +10,6 @@ const modLogApi = createApi({
         headers.set("authorization", `Bearer ${token}`);
       }
 
-      const user = localStorage.getItem("personid");
-      if (user) {
-        headers.set("user", user);
-      }
       return headers;
     },
   }),

@@ -66,7 +66,7 @@ export default class BanCommands {
 
             let expiresDate = (((new Date()).getTime() + (86400000 * Number(expiresIn))) / 1000) | 0;
 
-            const banCall = await client.banFromCommunity({
+            await client.banFromCommunity({
                 auth: getAuth(),
                 ban: Boolean(true),
                 community_id: Number(commId.community_view.community.id),
@@ -130,7 +130,7 @@ export default class BanCommands {
                 username: userId,
             });
 
-            const unbanCall = await client.banFromCommunity({
+            await client.banFromCommunity({
                 auth: getAuth(),
                 ban: Boolean(false),
                 community_id: Number(commId.community_view.community.id),
@@ -141,7 +141,7 @@ export default class BanCommands {
             await interaction.editReply(`Successfully unbanned ${userId} from ${communityName}.`);
         } catch (exc) {
             console.log(exc);
-            interaction.editReply("Something went wrong");
+            await interaction.editReply("Something went wrong");
         }
     }
 }

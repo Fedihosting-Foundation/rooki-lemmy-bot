@@ -84,13 +84,17 @@ export const ReportEntry = (props: {
   const [updatePost] = useUpdateModqueueMutation();
   const [addModNote] = useAddModMessageMutation();
   const completed = props.data.status === QueueEntryStatus.Completed;
-  const resolved = isCommentReport ? (props.data.entry as CommentReportView).comment_report.resolved : (props.data.entry as PostReportView).post_report.resolved;
+  const resolved = isCommentReport
+    ? (props.data.entry as CommentReportView).comment_report.resolved
+    : (props.data.entry as PostReportView).post_report.resolved;
   const [postExpanded, setPostExpanded] = useState(
     !IModQueueUtils.isResolved(props.data.entry)
   );
 
   useEffect(() => {
-    setPostExpanded(props.data.status === QueueEntryStatus.Pending && !resolved);
+    setPostExpanded(
+      props.data.status === QueueEntryStatus.Pending && !resolved
+    );
   }, [props.data.status, resolved]);
 
   const handleUpdateClick = (res?: QueueEntryResult) => {
@@ -276,21 +280,7 @@ export const ReportEntry = (props: {
               }
             />
           </Box>
-          {props.data.entry.post.url ? (
-            <>
-              <Button
-                sx={{ mb: 1 }}
-                onClick={() => {
-                  window.open(props.data.entry.post.url, "_blank");
-                }}
-              >
-                URL: {props.data.entry.post.url}
-              </Button>
-              <Divider />
-            </>
-          ) : (
-            <></>
-          )}
+          <Divider />
 
           {props.data.modNote ? (
             <Box>
@@ -345,7 +335,7 @@ export const ReportEntry = (props: {
             }}
             sx={{ ml: "25px", mr: "10px", borderLeft: "5px black solid" }}
             elevation={12}
-            />
+          />
         )}
         <CardActions disableSpacing>
           <Tooltip

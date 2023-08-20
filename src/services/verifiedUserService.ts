@@ -56,7 +56,7 @@ class verifiedUserService {
     setInterval(() => {
       this.repository.findAll().then((users) => {
         this.userQueue.push(users);
-      });
+      }).catch(e => console.log(e));
     }, 1000 * 60 * 5);
     this.userQueue.resume();
   }

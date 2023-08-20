@@ -284,74 +284,90 @@ class LogHandler {
   @LemmyOn({ event: "postcreated" })
   async handlePost(event: LemmyEventArguments<postViewModel>) {
     if (!event.config?.logConfig.discord.posts.enabled) return;
-    logService.Log(
-      {
-        content: "Post created!",
-        embeds: [LogHelper.postToEmbed(event.data)],
-        components: [...getActionForPost(event.data)],
-      },
-      {
-        channel:
-          event.config.logConfig.discord.posts.channel ||
-          event.config.logConfig.discord.logChannel,
-        guild: event.config.logConfig.discord.logGuild,
-        options: event.config.logConfig.discord.posts,
-      }
-    );
+    try {
+      await logService.Log(
+        {
+          content: "Post created!",
+          embeds: [LogHelper.postToEmbed(event.data)],
+          components: [...getActionForPost(event.data)],
+        },
+        {
+          channel:
+            event.config.logConfig.discord.posts.channel ||
+            event.config.logConfig.discord.logChannel,
+          guild: event.config.logConfig.discord.logGuild,
+          options: event.config.logConfig.discord.posts,
+        }
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
   @LemmyOn({ event: "commentcreated" })
   async handleComments(event: LemmyEventArguments<commentViewModel>) {
     if (!event.config?.logConfig.discord.comments.enabled) return;
-    logService.Log(
-      {
-        content: "Comment created!",
-        embeds: [LogHelper.commentToEmbed(event.data)],
-        components: [...getActionForComment(event.data)],
-      },
-      {
-        channel:
-          event.config.logConfig.discord.comments.channel ||
-          event.config.logConfig.discord.logChannel,
-        guild: event.config.logConfig.discord.logGuild,
-        options: event.config.logConfig.discord.comments,
-      }
-    );
+    try {
+      await logService.Log(
+        {
+          content: "Comment created!",
+          embeds: [LogHelper.commentToEmbed(event.data)],
+          components: [...getActionForComment(event.data)],
+        },
+        {
+          channel:
+            event.config.logConfig.discord.comments.channel ||
+            event.config.logConfig.discord.logChannel,
+          guild: event.config.logConfig.discord.logGuild,
+          options: event.config.logConfig.discord.comments,
+        }
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
   @LemmyOn({ event: "commentreportcreated" })
   async logCommentReports(event: LemmyEventArguments<commentReportViewModel>) {
     if (!event.config?.logConfig.discord.reports.enabled) return;
-    await logService.Log(
-      {
-        content: "New Comment Report!",
-        embeds: LogHelper.commentReportToEmbed(event.data),
-        components: [...getActionForCommentReport(event.data)],
-      },
-      {
-        channel:
-          event.config.logConfig.discord.reports.channel ||
-          event.config.logConfig.discord.logChannel,
-        guild: event.config.logConfig.discord.logGuild,
-        options: event.config.logConfig.discord.reports,
-      }
-    );
+    try {
+      await logService.Log(
+        {
+          content: "New Comment Report!",
+          embeds: LogHelper.commentReportToEmbed(event.data),
+          components: [...getActionForCommentReport(event.data)],
+        },
+        {
+          channel:
+            event.config.logConfig.discord.reports.channel ||
+            event.config.logConfig.discord.logChannel,
+          guild: event.config.logConfig.discord.logGuild,
+          options: event.config.logConfig.discord.reports,
+        }
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   @LemmyOn({ event: "postreportcreated" })
   async logPostReports(event: LemmyEventArguments<postReportViewModel>) {
     if (!event.config?.logConfig.discord.reports.enabled) return;
-    await logService.Log(
-      {
-        content: "New Post Report!",
-        embeds: LogHelper.postReportToEmbed(event.data),
-        components: [...getActionForPostReport(event.data)],
-      },
-      {
-        channel:
-          event.config.logConfig.discord.reports.channel ||
-          event.config.logConfig.discord.logChannel,
-        guild: event.config.logConfig.discord.logGuild,
-        options: event.config.logConfig.discord.reports,
-      }
-    );
+    try {
+      await logService.Log(
+        {
+          content: "New Post Report!",
+          embeds: LogHelper.postReportToEmbed(event.data),
+          components: [...getActionForPostReport(event.data)],
+        },
+        {
+          channel:
+            event.config.logConfig.discord.reports.channel ||
+            event.config.logConfig.discord.logChannel,
+          guild: event.config.logConfig.discord.logGuild,
+          options: event.config.logConfig.discord.reports,
+        }
+      );
+    } catch (e) {
+      console.log(e);
+    }
   }
 }

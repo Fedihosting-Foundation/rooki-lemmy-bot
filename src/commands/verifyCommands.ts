@@ -63,7 +63,11 @@ export default class VerifyCommands {
         await interaction.editReply("You are now verified!");
       } catch (exc) {
         console.log(exc);
-        interaction.editReply("Something went wrong");
+        try {
+          await interaction.editReply("Something went wrong");
+        } catch (er) {
+          console.log(er);
+        }
       }
       return;
     }
@@ -74,7 +78,7 @@ export default class VerifyCommands {
       });
 
       if (!user) {
-        interaction.editReply("User not found!");
+        await interaction.editReply("User not found!");
         return;
       }
 
@@ -127,7 +131,7 @@ export default class VerifyCommands {
           const code = this.verifiedUserService.createVerificationCode(
             user.person_view.person
           );
-          client.createPrivateMessage({
+          await client.createPrivateMessage({
             auth: getAuth(),
             recipient_id: user.person_view.person.id,
             content: `Hello ${user.person_view.person.name}! 
@@ -152,7 +156,11 @@ This message is automated! Please dont reply to this message!`,
       });
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong ( User not found? )");
+      try {
+        await interaction.editReply("Something went wrong ( User not found? )");
+      } catch (er) {
+        console.log(er);
+      }
     }
   }
 
@@ -169,7 +177,11 @@ This message is automated! Please dont reply to this message!`,
       await interaction.editReply("You are now unverified!");
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong ( User not found? )");
+      try {
+        await interaction.editReply("Something went wrong ( User not found? )");
+      } catch (er) {
+        console.log(er);
+      }
     }
   }
 }

@@ -25,6 +25,7 @@
     "lemmy-js-client": "^0.18.3-rc.3",
     "mongodb": "^5.6.0",
     "move-cli": "^2.0.0",
+    "node-cache": "^5.1.2",
     "node-cron": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "semver": ">=7.5.2",

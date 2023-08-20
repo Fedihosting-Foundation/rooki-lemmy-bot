@@ -18,7 +18,7 @@ class communityConfigService {
   @Inject()
   CommunityService: CommunityService;
 
-  async getCommunities() {
+  async getCommunityConfigs() {
     return await this.repository.findAll();
   }
 
@@ -35,7 +35,7 @@ class communityConfigService {
     community: Community,
     logOptions: Partial<LogOptions>
   ) {
-    const config = await this.getCommunityConfig(community);
+    const config = await this.getCommunityConfig(community.id);
     if (!config) throw new Error("Community config not found!");
     config.logConfig = { ...config.logConfig, ...logOptions };
     return await this.repository.save(config);
@@ -45,7 +45,7 @@ class communityConfigService {
     community: Community,
     filterOption: CommunityFilterConfig[]
   ) {
-    const config = await this.getCommunityConfig(community);
+    const config = await this.getCommunityConfig(community.id);
     if (!config) throw new Error("Community config not found!");
     config.filterConfig = filterOption;
     return await this.repository.save(config);
@@ -55,14 +55,14 @@ class communityConfigService {
     community: Community,
     timeOption: CommunityTimedConfig[]
   ) {
-    const config = await this.getCommunityConfig(community);
+    const config = await this.getCommunityConfig(community.id);
     if (!config) throw new Error("Community config not found!");
     config.timedConfig = timeOption;
     return await this.repository.save(config);
   }
 
   async setExecuteTime(community: Community, timeOptionId: string) {
-    const config = await this.getCommunityConfig(community);
+    const config = await this.getCommunityConfig(community.id);
     if (!config) throw new Error("Community config not found!");
     const timedConfig = config.timedConfig;
     const timedConfigIndex = timedConfig.findIndex(
@@ -74,9 +74,10 @@ class communityConfigService {
     config.timedConfig = timedConfig;
     return await this.repository.save(config);
   }
-  async getCommunityConfig(community: Community) {
+
+  async getCommunityConfig(communityId: number) {
     return await this.repository.findOne({
-      where: { "community.id": { $eq: community.id } },
+      where: { "community.id": { $eq: communityId } },
     });
   }
 

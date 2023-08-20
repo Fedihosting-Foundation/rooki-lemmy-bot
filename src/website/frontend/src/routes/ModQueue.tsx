@@ -1,9 +1,8 @@
-import { Box, Button, FormControlLabel, Switch } from "@mui/material";
-import { useGetModqueueQuery } from "../redux/api/ModQueueAPI";
-import { useEffect, useState } from "react";
+import { Box, Button, Collapse, FormControlLabel, Switch } from "@mui/material";
+import { useLazyGetModqueueQuery } from "../redux/api/ModQueueAPI";
+import { useCallback, useEffect, useState } from "react";
 import IModQueueEntry, {
   IModQueueUtils,
-  QueueEntryStatus,
   allowedEntries,
 } from "../models/IModeQueueEntry";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
@@ -14,23 +13,30 @@ import {
 import { useWindowSize } from "../util/utils";
 import { PostEntry } from "../components/entries/PostEntry";
 import { ReportEntry } from "../components/entries/ReportEntry";
-import { CommentReportView, PostReportView, PostView } from "lemmy-js-client";
+import {
+  CommentReportView,
+  Community,
+  PostReportView,
+  PostView,
+} from "lemmy-js-client";
 import { logoutUser } from "../redux/reducers/AuthenticationReducer";
 
 export const ModQueue = () => {
   const dispatch = useAppDispatch();
-  const { data: modQueue } = useGetModqueueQuery(undefined, {
-    pollingInterval: 1 * 60 * 1000,
-  });
+  const [fetchMore, { data: modQueueData, isFetching, isLoading }] =
+    useLazyGetModqueueQuery();
+
+  const [modQueue, setModQueue] = useState<IModQueueEntry<allowedEntries>[]>(
+    []
+  );
   const spotlight = useAppSelector(selectSpotlight);
   const [showOnlyOpenTasks, setShowOnlyOpenTasks] = useState<boolean>(
     localStorage.getItem("showOnlyOpenTasks") === "true"
   );
 
-  const [modData, setModData] = useState<IModQueueEntry<allowedEntries>[]>([]);
-  const [h, setH] = useState<number>(25);
   const [oldH, setOldH] = useState<number>(0);
-  const [lastScroll, setLastScroll] = useState<number>(0);
+  const [modData, setModData] = useState<IModQueueEntry<allowedEntries>[]>([]);
+  let nextScroll = Date.now() + 5000;
   const handleScroll = (e: any) => {
     const bottom =
       e.target.scrollHeight - e.target.scrollTop <=
@@ -39,38 +45,60 @@ export const ModQueue = () => {
     if (
       bottom &&
       modQueue &&
-      modQueue.length >= h &&
-      lastScroll <= Date.now()
+      !isFetching &&
+      !isLoading &&
+      modQueue.length > 0 &&
+      nextScroll <= Date.now() &&
+      oldH !== e.target.scrollHeight &&
+      hasMore()
     ) {
-      setH(h + 25);
-      setLastScroll(Date.now() + 500);
+      setOldH(e.target.scrollHeight);
+      nextScroll = Date.now() + 5000;
+      fetchMore({
+        id: modQueue[modQueue.length - 1].id,
+        communities: filter.map((x) => x.community.id),
+      });
     }
   };
 
-  useEffect(() => {
-    if (!modQueue) return;
-    let newH = h;
-    let data = [...modQueue];
-    if (oldH !== 0 && oldH !== modQueue.length) {
-      newH += modQueue.length - oldH;
-    }
-    setOldH(modQueue.length);
+  const [filterOpen, setFilterOpen] = useState<boolean>(false);
+  const [filter, setFilter] = useState<{ community: Community }[]>([]);
+  const [availableCommunities, setAvailableCommunities] = useState<Community[]>(
+    []
+  );
+  const hasMore = useCallback(() => {
+    return modQueueData?.length === 20;
+  }, [modQueueData]);
+  const setAvailableComms = useCallback(async () => {
+    const foundComs: Community[] = [];
+    modQueue?.forEach((x) => {
+      if (!foundComs.some((y) => y.id === x.entry.community.id))
+        foundComs.push(x.entry.community);
+    });
+    setAvailableCommunities(foundComs);
+    return foundComs;
+  }, [modQueue]);
 
-    data.reverse();
+  useEffect(() => {
+    if (isFetching && isLoading) return;
+    let data = [...modQueue];
 
     data = data.filter((x) => {
-      return !showOnlyOpenTasks || !IModQueueUtils.isDone(x);
+      return (
+        (!showOnlyOpenTasks || !IModQueueUtils.isDone(x)) &&
+        (filter.length === 0 ||
+          filter.some((c) => c.community.id === x.entry.community.id))
+      );
     });
 
-    if (data.length < newH) newH = data.length;
-    data.length = newH;
-    data = data.slice(0, newH);
-    if (data) {
-      setModData(data);
-    }
-  }, [modQueue, h, showOnlyOpenTasks]);
+    setModData(data);
+  }, [modQueue, showOnlyOpenTasks, filter, isFetching, isLoading]);
 
-  const [width, height] = useWindowSize();
+  useEffect(() => {
+    if (!modQueue) return;
+    setAvailableComms();
+  }, [modQueue, setAvailableComms]);
+  const [width] = useWindowSize();
 
   const handleShowOnlyOpenTasks = (checked: boolean) => {
     setShowOnlyOpenTasks(checked);
@@ -88,6 +116,21 @@ export const ModQueue = () => {
       setProps({ width: "50%", ml: "50%" });
     }
   }, [width]);
+
+  useEffect(() => {
+    if (modQueueData && modQueueData.length > 0) {
+      setModQueue([
+        ...modQueue.filter((x) => !modQueueData.some((y) => y.id === x.id)),
+        ...modQueueData,
+      ]);
+    } else if (!modQueueData) {
+      fetchMore({
+        id: undefined,
+        communities: filter.map((x) => x.community.id),
+      });
+    }
+  }, [modQueueData]);
+
   return (
     <Box
       sx={{
@@ -152,7 +195,11 @@ export const ModQueue = () => {
               mb: "10px",
             }}
             onClick={() => {
-              setH(h + 20);
+              modQueue &&
+                fetchMore({
+                  id: modQueue[modQueue.length - 1].id,
+                  communities: filter.map((x) => x.community.id),
+                });
             }}
           >
             Load More
@@ -211,12 +258,52 @@ export const ModQueue = () => {
             }}
             variant="outlined"
             onClick={() => {
-              console.log("logout");
               dispatch(logoutUser());
             }}
-          
-          >Logout</Button>
+          >
+            Logout
+          </Button>
         </Box>
+
+        <Button
+          sx={{
+            height: "25px",
+            mt: "10px",
+            width: "100%",
+          }}
+          onClick={() => {
+            setFilterOpen(!filterOpen);
+          }}
+        >
+          {filterOpen ? "Close " : "Open "} Filters
+        </Button>
+        <Collapse in={filterOpen}>
+          <Box
+            sx={{
+              pl: "10px",
+              maxHeight: "400px",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {availableCommunities.map((x) => (
+              <FormControlLabel
+                key={"filter" + x.id}
+                control={<Switch />}
+                checked={filter.some((y) => y.community.id === x.id)}
+                onChange={(ev, checked) => {
+                  if (checked) {
+                    setFilter([...filter, { community: x }]);
+                  } else {
+                    setFilter(filter.filter((y) => y.community.id !== x.id));
+                  }
+                }}
+                label={x.name}
+              ></FormControlLabel>
+            ))}
+          </Box>
+        </Collapse>
       </Box>
     </Box>
   );

@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  Button,
   Card,
   CardContent,
   CardHeader,
@@ -166,6 +167,21 @@ export const PostCard = (props: {
         ) : (
           <></>
         )}
+                 {props.data.entry.url ? (
+            <>
+              <Button
+                sx={{ mb: 1 }}
+                onClick={() => {
+                  window.open(props.data.entry.url, "_blank");
+                }}
+              >
+                URL: {props.data.entry.url}
+              </Button>
+            </>
+          ) : (
+            <></>
+          )}
+
         {props.data.entry.body ? (
           <ReactMarkdown children={props.data.entry.body} />
         ) : (
