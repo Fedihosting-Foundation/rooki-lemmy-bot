@@ -3,6 +3,7 @@ import IModQueueEntry, {
   QueueEntryResult,
   allowedEntries,
 } from "../../models/IModeQueueEntry";
+import { Community } from "lemmy-js-client";
 
 function providesList<R extends { id: string | number }[], T extends string>(
   resultsWithIds: R | undefined,
@@ -10,8 +11,8 @@ function providesList<R extends { id: string | number }[], T extends string>(
 ) {
   return resultsWithIds
     ? [
-        { type: tagType, id: "LIST" },
         ...resultsWithIds.map(({ id }) => ({ type: tagType, id })),
+        { type: tagType, id: "LIST" },
       ]
     : [{ type: tagType, id: "LIST" }];
 }
@@ -19,7 +20,7 @@ function providesList<R extends { id: string | number }[], T extends string>(
 const modQueueApi = createApi({
   reducerPath: "modqueue",
   baseQuery: fetchBaseQuery({
-    baseUrl: "api",
+    baseUrl: "/api/modqueue",
     prepareHeaders(headers, api) {
       const token = localStorage.getItem("jwt");
       if (token) {
@@ -35,15 +36,15 @@ const modQueueApi = createApi({
   refetchOnMountOrArgChange: 30,
   endpoints: (builder) => ({
     getModqueueEntry: builder.query<IModQueueEntry<allowedEntries>, string>({
-      query: (postId) => `/modqueue/getone/${postId}`,
+      query: (entryId) => `/getone/${entryId}`,
       providesTags: (result, error, arg) => [{ type: "modqueue", id: arg }],
     }),
     getModqueue: builder.query<
       IModQueueEntry<allowedEntries>[],
-      { id: string | undefined; communities: number[] }
+      { id: string | undefined; communities: number[]; ammount?: number }
     >({
       query: (options) => ({
-        url: `/modqueue`,
+        url: `/`,
         method: "POST",
         body: options,
       }),
@@ -58,7 +59,7 @@ const modQueueApi = createApi({
       }
     >({
       query: (body) => ({
-        url: `/modqueue/resolve`,
+        url: `/resolve`,
         method: "PUT",
         body,
       }),
@@ -74,7 +75,7 @@ const modQueueApi = createApi({
       }
     >({
       query: (body) => ({
-        url: `/modqueue/addnote`,
+        url: `/addnote`,
         method: "PUT",
         body,
       }),
@@ -84,19 +85,27 @@ const modQueueApi = createApi({
     }),
     refreshModMessage: builder.mutation<IModQueueEntry<allowedEntries>, string>(
       {
-        query: (postId) => `/modqueue/refresh/${postId}`,
+        query: (id) => `/refresh/${id}`,
         invalidatesTags: (result, error, arg) => [
           { type: "modqueue", id: arg },
         ],
       }
     ),
+    fetchCommunities: builder.query<
+      { success: boolean; communities: Community[] },
+      void
+    >({
+      query: () => `/communities`,
+    }),
   }),
 });
 
 export const {
+  useGetModqueueEntryQuery,
   useRefreshModMessageMutation,
   useLazyGetModqueueQuery,
   useUpdateModqueueMutation,
   useAddModMessageMutation,
+  useLazyFetchCommunitiesQuery,
 } = modQueueApi;
 export default modQueueApi;

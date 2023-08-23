@@ -37,10 +37,20 @@ class modQueueService {
     return await this.repository.save(data);
   }
 
-  async getModQueueEntryById(id: string) {
-    return await this.repository.findOne({
-      where: { _id: { $eq: new ObjectId(id) } },
+  async fetchCommunities() {
+    return await this.repository.find({
+      select: { entry: { community: true } },
     });
+  }
+
+  async getModQueueEntryById(id: string) {
+    try {
+      return await this.repository.findOne({
+        where: { _id: { $eq: new ObjectId(id) } },
+      });
+    } catch (e) {
+      console.log("ERROR", e);
+    }
   }
 
   async getModQueueEntriesByCommunity(communityId: string) {
@@ -75,19 +85,23 @@ class modQueueService {
     communityIds: number[] | false,
     limit: number = 20
   ) {
-    const query: any = {};
-    if (id) {
-      query._id = { $lte: new ObjectId(id) };
-    }
+    try {
+      const query: any = {};
+      if (id) {
+        query._id = { $lte: new ObjectId(id) };
+      }
 
-    if (communityIds) {
-      query["entry.community.id"] = { $in: communityIds };
+      if (communityIds) {
+        query["entry.community.id"] = { $in: communityIds };
+      }
+      return await this.repository.find({
+        where: query,
+        order: { _id: -1 },
+        take: limit,
+      });
+    } catch (e) {
+      console.log(e);
     }
-    return await this.repository.find({
-      where: query,
-      order: { _id: -1 },
-      take: limit,
-    });
   }
 
   async removeModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {

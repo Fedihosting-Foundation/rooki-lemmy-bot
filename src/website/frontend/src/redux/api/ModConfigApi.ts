@@ -5,7 +5,7 @@ import { Community } from "lemmy-js-client";
 const modConfigApi = createApi({
   reducerPath: "modConfigApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: "api/config",
+    baseUrl: "/api/config",
     prepareHeaders(headers, api) {
       const token = localStorage.getItem("jwt");
       if (token) {

@@ -49,7 +49,9 @@ function App() {
         {currentUser ? (
           <Route element={<NavigationDrawer />}>
             <Route path="/config" element={<CommunityConfig />} />
+            <Route path="/modqueue/:id" element={<ModQueue />} />
             <Route path="*" element={<ModQueue />} />
+
           </Route>
         ) : (
           <Route path="*" element={<Login />} />

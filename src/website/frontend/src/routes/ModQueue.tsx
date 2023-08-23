@@ -1,5 +1,9 @@
-import { Box, Button, Collapse, FormControlLabel, Switch } from "@mui/material";
-import { useLazyGetModqueueQuery } from "../redux/api/ModQueueAPI";
+import { Alert, AlertColor, Box, Button, Collapse, FormControlLabel, Portal, Snackbar, Switch } from "@mui/material";
+import {
+  useGetModqueueEntryQuery,
+  useLazyFetchCommunitiesQuery,
+  useLazyGetModqueueQuery,
+} from "../redux/api/ModQueueAPI";
 import { useCallback, useEffect, useState } from "react";
 import IModQueueEntry, {
   IModQueueUtils,
@@ -20,11 +24,23 @@ import {
   PostView,
 } from "lemmy-js-client";
 import { logoutUser } from "../redux/reducers/AuthenticationReducer";
+import { useParams } from "react-router-dom";
 
 export const ModQueue = () => {
   const dispatch = useAppDispatch();
-  const [fetchMore, { data: modQueueData, isFetching, isLoading }] =
+  const [fetchMore, { data: modQueueData, isFetching, isLoading, isError }] =
     useLazyGetModqueueQuery();
+
+  const params = useParams();
+  const isSingleView = "id" in params;
+  const [wasSingleView, setWasSingleView] = useState<boolean>(isSingleView);
+  const { data: SingleViewData, refetch, isError: singleError } = useGetModqueueEntryQuery(
+    params.id!,
+    { skip: !isSingleView }
+  );
+    const [alert, setAlert] = useState<{state: AlertColor, text: string} | undefined>(undefined);
+  const [fetchCommunities, { data: communityData, isError: manyError }] =
+    useLazyFetchCommunitiesQuery({ pollingInterval: 2 * 60 * 1000 });
 
   const [modQueue, setModQueue] = useState<IModQueueEntry<allowedEntries>[]>(
     []
@@ -33,6 +49,10 @@ export const ModQueue = () => {
   const [showOnlyOpenTasks, setShowOnlyOpenTasks] = useState<boolean>(
     localStorage.getItem("showOnlyOpenTasks") === "true"
   );
+
+    const hasError = useCallback(() => {
+    return isError || singleError || manyError;
+  }, [isError, singleError, manyError]);
 
   const [oldH, setOldH] = useState<number>(0);
   const [modData, setModData] = useState<IModQueueEntry<allowedEntries>[]>([]);
@@ -67,42 +87,54 @@ export const ModQueue = () => {
     []
   );
   const hasMore = useCallback(() => {
-    return modQueueData?.length === 20;
+    return modQueueData?.length === 20 && !isSingleView;
   }, [modQueueData]);
-  const setAvailableComms = useCallback(async () => {
-    const foundComs: Community[] = [];
-    modQueue?.forEach((x) => {
-      if (!foundComs.some((y) => y.id === x.entry.community.id))
-        foundComs.push(x.entry.community);
-    });
-    setAvailableCommunities(foundComs);
-    return foundComs;
-  }, [modQueue]);
 
   useEffect(() => {
     if (isFetching && isLoading) return;
-    let data = [...modQueue];
+    let data = modQueue;
 
     data = data.filter((x) => {
       return (
-        (!showOnlyOpenTasks || !IModQueueUtils.isDone(x)) &&
-        (filter.length === 0 ||
-          filter.some((c) => c.community.id === x.entry.community.id))
+        isSingleView ||
+        ((!showOnlyOpenTasks || !IModQueueUtils.isDone(x)) &&
+          (filter.length === 0 ||
+            filter.some((c) => c.community.id === x.entry.community.id)))
       );
     });
 
     setModData(data);
-  }, [modQueue, showOnlyOpenTasks, filter, isFetching, isLoading]);
+  }, [
+    modQueue,
+    showOnlyOpenTasks,
+    filter,
+    isFetching,
+    isLoading,
+    isSingleView,
+  ]);
 
   useEffect(() => {
-    if (!modQueue) return;
-    setAvailableComms();
-  }, [modQueue, setAvailableComms]);
+    if (filterOpen) fetchCommunities();
+  }, [filterOpen]);
+
+  useEffect(() => {
+    if (communityData) setAvailableCommunities(communityData.communities);
+  }, [communityData]);
+
   const [width] = useWindowSize();
 
   const handleShowOnlyOpenTasks = (checked: boolean) => {
     setShowOnlyOpenTasks(checked);
     localStorage.setItem("showOnlyOpenTasks", String(checked));
+  };
+
+  const onAction = (id: string) => {
+    if (isSingleView) return refetch();
+    fetchMore({
+      id: id,
+      communities: filter.map((x) => x.community.id),
+      ammount: 1,
+    });
   };
 
   const [props, setProps] = useState<any>({});
@@ -118,18 +150,38 @@ export const ModQueue = () => {
   }, [width]);
 
   useEffect(() => {
+    if (isSingleView) {
+      if (SingleViewData) setModQueue([SingleViewData]);
+
+      return;
+    }
+    if (wasSingleView) {
+      setModQueue([]);
+      setWasSingleView(false);
+      return;
+    }
     if (modQueueData && modQueueData.length > 0) {
-      setModQueue([
-        ...modQueue.filter((x) => !modQueueData.some((y) => y.id === x.id)),
-        ...modQueueData,
-      ]);
+      const temp = [...modQueueData];
+      const data = modQueue.map((x) => {
+        const found = temp.findIndex((y) => y.id === x.id);
+        if (found > -1) {
+          return temp.splice(found, 1)[0];
+        }
+
+        return x;
+      });
+      setModQueue([...data, ...temp].filter((x) => x !== undefined));
     } else if (!modQueueData) {
       fetchMore({
         id: undefined,
         communities: filter.map((x) => x.community.id),
       });
     }
-  }, [modQueueData]);
+  }, [modQueueData, isSingleView, SingleViewData, wasSingleView]);
+
+  useEffect(() => {
+    if(hasError()) setAlert({state: "error", text: "Something went wrong!"})
+  }, [hasError])
 
   return (
     <Box
@@ -148,6 +200,7 @@ export const ModQueue = () => {
             <PostEntry
               key={"PostEntry" + entry.entry.post.id}
               data={entry as IModQueueEntry<PostView>}
+              onAction={onAction}
               sx={{
                 ...props,
                 transform: `translateX(-${
@@ -167,6 +220,7 @@ export const ModQueue = () => {
                   ? "post_report"
                   : "comment_report")
               }
+              onAction={onAction}
               data={entry as IModQueueEntry<CommentReportView | PostReportView>}
               sx={{
                 ...props,
@@ -181,7 +235,8 @@ export const ModQueue = () => {
       ) : (
         <></>
       )}
-      {modData.length !== (modQueue?.length || 0) ? (
+      {modData.length !== (modQueue?.length || modData.length) &&
+      !isSingleView ? (
         <Box
           sx={{
             width: "100%",
@@ -208,103 +263,123 @@ export const ModQueue = () => {
       ) : (
         <></>
       )}
-      <Box
-        sx={{
-          position: "fixed",
-
-          top: "5px",
-          right: "25px",
-          p: "5px",
-          maxWidth: width > 1500 ? "100%" : "250px",
-          borderRadius: "10px",
-          backgroundColor: "rgba(0,0,0,0.75)",
-        }}
-      >
+      {isSingleView ? (
+        <></>
+      ) : (
         <Box
           sx={{
-            display: "inline-flex",
-            flexDirection: "row",
-            flexWrap: "wrap",
-          }}
-        >
-          <FormControlLabel
-            control={<Switch />}
-            onChange={(ev, checked) => {
-              handleShowOnlyOpenTasks(checked);
-            }}
-            checked={showOnlyOpenTasks}
-            label="Show only Open Tasks"
-          />
+            position: "fixed",
 
-          <FormControlLabel
-            control={<Switch />}
-            onChange={(ev, checked) => {
-              dispatch(setSpotlight(checked));
-            }}
-            checked={spotlight}
-            label="Enable Spotlight"
-          />
-        </Box>
-        <Box
-          sx={{
-            width: "100%",
+            top: "5px",
+            right: "25px",
+            p: "5px",
+            maxWidth: width > 1500 ? "100%" : "250px",
+            borderRadius: "10px",
+            backgroundColor: "rgba(0,0,0,0.75)",
           }}
         >
-          <Button
-            sx={{
-              width: "100%",
-              mt: "10px",
-              height: "25px",
-            }}
-            variant="outlined"
-            onClick={() => {
-              dispatch(logoutUser());
-            }}
-          >
-            Logout
-          </Button>
-        </Box>
-
-        <Button
-          sx={{
-            height: "25px",
-            mt: "10px",
-            width: "100%",
-          }}
-          onClick={() => {
-            setFilterOpen(!filterOpen);
-          }}
-        >
-          {filterOpen ? "Close " : "Open "} Filters
-        </Button>
-        <Collapse in={filterOpen}>
           <Box
             sx={{
-              pl: "10px",
-              maxHeight: "400px",
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
+              display: "inline-flex",
+              flexDirection: "row",
+              flexWrap: "wrap",
             }}
           >
-            {availableCommunities.map((x) => (
-              <FormControlLabel
-                key={"filter" + x.id}
-                control={<Switch />}
-                checked={filter.some((y) => y.community.id === x.id)}
-                onChange={(ev, checked) => {
-                  if (checked) {
-                    setFilter([...filter, { community: x }]);
-                  } else {
-                    setFilter(filter.filter((y) => y.community.id !== x.id));
-                  }
-                }}
-                label={x.name}
-              ></FormControlLabel>
-            ))}
+            <FormControlLabel
+              control={<Switch />}
+              onChange={(ev, checked) => {
+                handleShowOnlyOpenTasks(checked);
+              }}
+              checked={showOnlyOpenTasks}
+              label="Show only Open Tasks"
+            />
+
+            <FormControlLabel
+              control={<Switch />}
+              onChange={(ev, checked) => {
+                dispatch(setSpotlight(checked));
+              }}
+              checked={spotlight}
+              label="Enable Spotlight"
+            />
           </Box>
-        </Collapse>
-      </Box>
+          <Box
+            sx={{
+              width: "100%",
+            }}
+          >
+            <Button
+              sx={{
+                width: "100%",
+                mt: "10px",
+                height: "25px",
+              }}
+              variant="outlined"
+              onClick={() => {
+                dispatch(logoutUser());
+              }}
+            >
+              Logout
+            </Button>
+          </Box>
+
+          <Button
+            sx={{
+              height: "25px",
+              mt: "10px",
+              width: "100%",
+            }}
+            onClick={() => {
+              setFilterOpen(!filterOpen);
+            }}
+          >
+            {filterOpen ? "Close " : "Open "} Filters
+          </Button>
+          <Collapse in={filterOpen}>
+            <Box
+              sx={{
+                pl: "10px",
+                maxHeight: "400px",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {availableCommunities.map((x) => (
+                <FormControlLabel
+                  key={"filter" + x.id}
+                  control={<Switch />}
+                  checked={filter.some((y) => y.community.id === x.id)}
+                  onChange={(ev, checked) => {
+                    if (checked) {
+                      setFilter([...filter, { community: x }]);
+                    } else {
+                      setFilter(filter.filter((y) => y.community.id !== x.id));
+                    }
+                  }}
+                  label={x.name}
+                ></FormControlLabel>
+              ))}
+            </Box>
+          </Collapse>
+        </Box>
+      )}
+      <Portal>
+      <Snackbar
+          open={alert !== undefined}
+          autoHideDuration={6000}
+          onClose={() => setAlert(undefined)}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        >
+          <Alert
+            onClose={() => setAlert(undefined)}
+            severity={alert?.state}
+            sx={{ width: "100%" }}
+          >
+            {alert?.text}
+          </Alert>
+        </Snackbar>
+      </Portal>
     </Box>
   );
 };

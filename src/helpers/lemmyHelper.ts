@@ -29,16 +29,10 @@ export function sleep(ms: number) {
   });
 }
 
-export const isModOfCommunityPersonResponse = async (
+export const isModOfCommunityPersonResponse = (
   user: GetPersonDetailsResponse | MyUserInfo,
   communityId: number
 ) => {
-  request++;
-
-  if (request % 5 === 0) {
-    await sleep(1000);
-  }
-
   if (
     "person_view" in user
       ? user.person_view.person.admin
@@ -73,7 +67,7 @@ export const isModOfCommunityPerson = async (
     if (!commService) return false;
     const person = await commService.getUser({ id: user.id }, false, client);
     if (!person) return false;
-    return await isModOfCommunityPersonResponse(person, communityId);
+    return isModOfCommunityPersonResponse(person, communityId);
   } catch (e) {
     console.log(e);
     return false;

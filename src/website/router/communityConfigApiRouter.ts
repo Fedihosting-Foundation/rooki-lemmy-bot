@@ -3,8 +3,12 @@ import express from "express";
 import CommunityService from "../../services/communityService";
 import communityConfigService from "../../services/communityConfigService";
 import communityConfigModel from "../../models/communityConfigModel";
-import { isModOfCommunityPerson, isModOfCommunityPersonResponse } from "../../helpers/lemmyHelper";
+import {
+  isModOfCommunityPerson,
+  isModOfCommunityPersonResponse,
+} from "../../helpers/lemmyHelper";
 import { asyncFilter } from "../../utils/AsyncFilter";
+import modQueueService from "../../services/modQueueService";
 
 let communityServ: CommunityService | undefined;
 
@@ -26,6 +30,17 @@ function getCommunityConfigService() {
   }
   return communityConfigServ;
 }
+
+let modQueueServ: modQueueService | undefined;
+
+function getModQueueService() {
+  if (!modQueueServ) {
+    modQueueServ =
+      typeDiDependencyRegistryEngine.getService(modQueueService) || undefined;
+  }
+  return modQueueServ;
+}
+
 const communityConfigRouter = express.Router();
 communityConfigRouter.get("/", async (req, res) => {
   try {
@@ -46,10 +61,7 @@ communityConfigRouter.get("/", async (req, res) => {
     const communities = await asyncFilter(
       await communityConfigService.getCommunityConfigs(),
       async (x) => {
-        return await isModOfCommunityPersonResponse(
-          user,
-          x.community.id
-        );
+        return await isModOfCommunityPersonResponse(user, x.community.id);
       }
     );
 
@@ -120,10 +132,7 @@ communityConfigRouter.put("/:id", async (req, res) => {
       return;
     }
 
-    const isModeratorOf = isModOfCommunityPersonResponse(
-      user,
-      communityId
-    );
+    const isModeratorOf = isModOfCommunityPersonResponse(user, communityId);
     if (!isModeratorOf) {
       res.status(403).send("You are not a moderator of this community");
       return;

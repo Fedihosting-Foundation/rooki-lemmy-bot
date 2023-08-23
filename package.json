@@ -5,7 +5,7 @@
   "license": "MIT",
   "main": "build/main.js",
   "scripts": {
-    "dev": "ts-node-esm src/main.ts",
+    "dev": "node --max-http-header-size 15000 -r ts-node/register src/main.ts",
     "build": "del-cli build && tsc & cd src/website/frontend && npm install && npm run build && del-cli ../../../build/website/frontend -f && move-cli ./build ../../../build/website/frontend -md && cd ../../..",
     "start": "node build/main.js",
     "watch": "nodemon --exec ts-node src/main.ts"
@@ -24,6 +24,7 @@
     "http-proxy-middleware": "^2.0.6",
     "lemmy-js-client": "^0.18.3-rc.3",
     "mongodb": "^5.6.0",
+    "morgan": "^1.10.0",
     "move-cli": "^2.0.0",
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.2",
@@ -37,6 +38,7 @@
     "@types/better-queue": "^3.8.3",
     "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
+    "@types/morgan": "^1.9.4",
     "@types/node-cron": "^3.0.8",
     "nodemon": "^2.0.22",
     "prettier": "^2.8.8",

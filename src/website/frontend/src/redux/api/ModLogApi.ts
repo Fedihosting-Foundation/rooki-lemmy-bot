@@ -3,7 +3,7 @@ import IUserInfoResponse from "../../models/IUserInfoResponse";
 const modLogApi = createApi({
   reducerPath: "modlog",
   baseQuery: fetchBaseQuery({
-    baseUrl: "api/user",
+    baseUrl: "/api/user",
     prepareHeaders(headers, api) {
       const token = localStorage.getItem("jwt");
       if (token) {

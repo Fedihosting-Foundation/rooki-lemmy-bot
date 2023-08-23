@@ -1,4 +1,5 @@
 import {
+  Alert,
   Autocomplete,
   Avatar,
   Box,
@@ -17,6 +18,8 @@ import {
   Divider,
   IconButton,
   ListItem,
+  Portal,
+  Snackbar,
   SxProps,
   TextField,
   Tooltip,
@@ -48,7 +51,14 @@ import { extractInstanceFromActorId, getActorId } from "../../util/utils";
 import { useLazyGetModLogsQuery } from "../../redux/api/ModLogApi";
 import ExpandMore from "../ExpandMore";
 import { PostView } from "lemmy-js-client";
-
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import {
+  addMarkedUser,
+  removeMarkedUser,
+  selectMarkedUsers,
+} from "../../redux/reducers/SettingsReducer";
+import LinkIcon from "@mui/icons-material/Link";
+import { useLocation } from "react-router-dom";
 const filter = createFilterOptions<{
   label?: string;
   value: string;
@@ -57,7 +67,10 @@ const filter = createFilterOptions<{
 export const PostEntry = (props: {
   data: IModQueueEntry<PostView>;
   sx?: SxProps;
+  onAction: (id: string) => void;
 }) => {
+  const dispatch = useAppDispatch();
+  const location = useLocation();
   const [result, setResult] = useState<QueueEntryResult | undefined>();
   const [refresh, { isLoading }] = useRefreshModMessageMutation();
   const [initiateModLogs, modLogsData] = useLazyGetModLogsQuery();
@@ -68,6 +81,10 @@ export const PostEntry = (props: {
   const handleModalClickOpen = () => {
     setModalOpen(true);
   };
+  const markedUsers = useAppSelector(selectMarkedUsers);
+  const [updateReport] = useUpdateModqueueMutation();
+  const [addModNote] = useAddModMessageMutation();
+  const [open, setOpen] = useState(false);
 
   const handleModalClose = (cancel: boolean) => {
     if (!cancel) {
@@ -75,14 +92,16 @@ export const PostEntry = (props: {
         id: props.data.id,
         result: result,
         reason: reason,
-      });
+      })
+        .unwrap()
+        .then(() => {
+          props.onAction(props.data.id);
+        });
       setResult(undefined);
     }
     setModalOpen(false);
   };
 
-  const [updateReport] = useUpdateModqueueMutation();
-  const [addModNote] = useAddModMessageMutation();
   const [expanded, setExpanded] = useState(false);
   const completed = props.data.status === QueueEntryStatus.Completed;
   const deleted = props.data.entry.post.deleted || false;
@@ -118,13 +137,22 @@ export const PostEntry = (props: {
 
   const [hoverAvatar, setHoverAvatar] = useState(false);
 
+  const extraSX = markedUsers?.includes(props.data.entry.creator.id)
+    ? { border: "2px solid red" }
+    : {};
+
   return (
-    <Card sx={{ ...props.sx }}>
+    <Card sx={{ ...props.sx, ...extraSX }}>
       <CardHeader
         avatar={
           <Box
             onMouseEnter={() => setHoverAvatar(true)}
             onMouseLeave={() => setHoverAvatar(false)}
+            onClick={() =>
+              markedUsers?.includes(props.data.entry.creator.id)
+                ? dispatch(removeMarkedUser(props.data.entry.creator.id))
+                : dispatch(addMarkedUser(props.data.entry.creator.id))
+            }
           >
             <Avatar
               sx={{ bgcolor: red[500] }}
@@ -146,9 +174,29 @@ export const PostEntry = (props: {
         action={
           <Box>
             <IconButton
+              onClick={async (ev) => {
+                ev.stopPropagation();
+                const text =
+                  window.location.href + "modqueue/" + props.data.id;
+
+                if ("clipboard" in navigator) {
+                  await navigator.clipboard.writeText(text);
+                } else {
+                  document.execCommand("copy", true, text);
+                }
+                setOpen(true);
+              }}
+            >
+              <LinkIcon />
+            </IconButton>
+            <IconButton
               disabled={isLoading}
               onClick={() => {
-                refresh(props.data.id);
+                refresh(props.data.id)
+                  .unwrap()
+                  .then(() => {
+                    props.onAction(props.data.id);
+                  });
               }}
             >
               <RefreshIcon />
@@ -188,7 +236,11 @@ export const PostEntry = (props: {
             >
               {props.data.entry.post.name}
             </Typography>
-
+            {props.data.entry.post.locked ? (
+              <LockIcon sx={{ color: "red", alignSelf: "center" }} />
+            ) : (
+              <></>
+            )}
             {props.data.result ? (
               props.data.result === QueueEntryResult.Approved ? (
                 <GppGoodIcon sx={{ color: "green", alignSelf: "center" }} />
@@ -591,7 +643,11 @@ export const PostEntry = (props: {
               addModNote({
                 modNote: modNote,
                 id: props.data.id,
-              });
+              })
+                .unwrap()
+                .then(() => {
+                  props.onAction(props.data.id);
+                });
               setModNote("");
               setModNoteModalOpen(false);
             }}
@@ -600,6 +656,22 @@ export const PostEntry = (props: {
           </Button>
         </DialogActions>
       </Dialog>
+      <Portal>
+        <Snackbar
+          open={open}
+          autoHideDuration={6000}
+          onClose={() => setOpen(false)}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        >
+          <Alert
+            onClose={() => setOpen(false)}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            Copied the URL to the clipboard!
+          </Alert>
+        </Snackbar>
+      </Portal>
     </Card>
   );
 };
