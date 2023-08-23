@@ -1,5 +1,11 @@
 import "reflect-metadata";
-import { CommentReportView, ListCommentReports, ListCommentReportsResponse, ListPostReportsResponse, PostReportView } from "lemmy-js-client";
+import {
+  CommentReportView,
+  ListCommentReports,
+  ListCommentReportsResponse,
+  ListPostReportsResponse,
+  PostReportView,
+} from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import baseService from "./baseService";
 import client, { getAuth } from "../main";
@@ -28,17 +34,17 @@ class reportService extends baseService<
 
   @Inject()
   CommunityConfigService: communityConfigService;
-  
-  commentReportCache: CommentReportView[] = []
 
-    postReportCache: PostReportView[] = []
+  commentReportCache: CommentReportView[] = [];
+
+  postReportCache: PostReportView[] = [];
 
   constructor() {
     super(
       async (input, cb) => {
         const data = input as CommentReportView | PostReportView;
         const config = await this.CommunityConfigService.getCommunityConfig(
-          data.community
+          data.community.id
         );
         if (!config) return;
         try {
@@ -115,9 +121,13 @@ class reportService extends baseService<
         concurrent: 4,
       }
     );
-    setInterval(() => {
-      this.getCommentReports(true)
-      this.getPostReports(true)
+    setInterval(async () => {
+      try {
+        await this.getCommentReports(true);
+        await this.getPostReports(true);
+      } catch (e) {
+        console.log(e);
+      }
     }, 1000 * 60 * 15);
   }
 
@@ -129,7 +139,7 @@ class reportService extends baseService<
         const postResult = await client.listPostReports({
           auth: getAuth(),
           page: i,
-          unresolved_only: false
+          unresolved_only: false,
         });
         console.log("Fetched Post Reports");
         this.push(...postResult.post_reports);
@@ -138,7 +148,7 @@ class reportService extends baseService<
         const commentResult = await client.listCommentReports({
           auth: getAuth(),
           page: i,
-          unresolved_only: false
+          unresolved_only: false,
         });
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);
@@ -159,20 +169,21 @@ class reportService extends baseService<
         return cachedReports;
       }
     }
-    const reports: PostReportView[] = []
+    const reports: PostReportView[] = [];
 
     for (let i = 1; i <= 3; i++) {
-      try{
-        reports.push(...(await client.listPostReports({ auth: getAuth() })).post_reports)
+      try {
+        reports.push(
+          ...(await client.listPostReports({ auth: getAuth() })).post_reports
+        );
+      } catch (e) {
+        console.log(e);
       }
-      catch(e){
-        console.log(e)
-      }
-      await sleep(5000)
+      await sleep(5000);
     }
-    this.postReportCache = reports
+    this.postReportCache = reports;
 
-    return this.postReportCache
+    return this.postReportCache;
   }
 
   async getCommentReports(force: boolean = false) {
@@ -182,28 +193,30 @@ class reportService extends baseService<
         return cachedReports;
       }
     }
-    const reports: CommentReportView[] = []
+    const reports: CommentReportView[] = [];
 
     for (let i = 1; i <= 3; i++) {
-      try{
-        reports.push(...(await client.listCommentReports({ auth: getAuth() })).comment_reports)
+      try {
+        reports.push(
+          ...(await client.listCommentReports({ auth: getAuth() }))
+            .comment_reports
+        );
+      } catch (e) {
+        console.log(e);
       }
-      catch(e){
-        console.log(e)
-      }
-      await sleep(5000)
+      await sleep(5000);
     }
-    this.commentReportCache = reports
+    this.commentReportCache = reports;
 
-    return this.commentReportCache
+    return this.commentReportCache;
   }
 
   async getPostReport(reportId: number) {
-    return this.postReportCache.find((x) => x.post_report.id === reportId)
+    return this.postReportCache.find((x) => x.post_report.id === reportId);
   }
 
   async getCommentReport(reportId: number) {
-    return this.postReportCache.find((x) => x.post_report.id === reportId)
+    return this.postReportCache.find((x) => x.post_report.id === reportId);
   }
 }
 

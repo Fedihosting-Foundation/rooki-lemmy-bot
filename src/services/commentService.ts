@@ -30,7 +30,7 @@ class commentService extends baseService<
       const comment = input as CommentView;
       try {
         const config = await this.CommunityConfigService.getCommunityConfig(
-          comment.community
+          comment.community.id
         );
         if (!config) return;
         const foundComment = await this.repository.findOne({
@@ -65,7 +65,7 @@ class commentService extends baseService<
   async fetchAndUpdate() {
     const comments: CommentView[] = [];
     try {
-      const communities = await this.CommunityConfigService.getCommunities();
+      const communities = await this.CommunityConfigService.getCommunityConfigs();
       for (let i = 1; i <= 5; i++) {
         const result = {
           comments: (

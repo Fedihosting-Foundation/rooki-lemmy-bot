@@ -54,7 +54,7 @@ export default class CommunityConfigCommands {
         return;
       }
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (config) {
         await interaction.editReply(
@@ -68,7 +68,7 @@ export default class CommunityConfigCommands {
       await interaction.editReply(`Added ${communityName} to the bot!`);
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -108,7 +108,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(`Community ${communityName} not found!`);
@@ -118,7 +118,7 @@ export default class CommunityConfigCommands {
       await interaction.editReply(`Removed ${communityName} from the bot!`);
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -204,7 +204,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -277,7 +277,7 @@ export default class CommunityConfigCommands {
         case "general":
         default:
           if (isThread) {
-            interaction.editReply("You can't set the general log to a thread!");
+            await interaction.editReply("You can't set the general log to a thread!");
           } else {
             config.logConfig.discord.logChannel = channel.id;
           }
@@ -294,7 +294,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -372,7 +372,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -417,7 +417,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -503,7 +503,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -541,7 +541,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -627,7 +627,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -678,7 +678,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -724,7 +724,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -753,7 +753,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -800,7 +800,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -829,7 +829,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -862,7 +862,7 @@ export default class CommunityConfigCommands {
         return;
       }
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -888,7 +888,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -927,7 +927,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -976,7 +976,7 @@ export default class CommunityConfigCommands {
       await pagination.send();
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -1040,7 +1040,7 @@ export default class CommunityConfigCommands {
       }
 
       const config = await this.communityConfigService.getCommunityConfig(
-        community.community_view.community
+        community.community_view.community.id
       );
       if (!config) {
         await interaction.editReply(
@@ -1056,7 +1056,7 @@ export default class CommunityConfigCommands {
       );
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 }

@@ -10,20 +10,12 @@ const utilApi = createApi({
         headers.set("authorization", `Bearer ${token}`);
       }
 
-      const user = localStorage.getItem("personid");
-      if (user) {
-        headers.set("user", user);
-      }
-      
       return headers;
     },
   }),
   refetchOnReconnect: true,
   endpoints: (builder) => ({
-    getPerson: builder.query<
-      GetPersonDetailsResponse,
-      { userId: number }
-    >({
+    getPerson: builder.query<GetPersonDetailsResponse, { userId: number }>({
       query: (user) => ({
         url: `/person`,
         method: "POST",
@@ -32,8 +24,20 @@ const utilApi = createApi({
         },
       }),
     }),
+    isBotModeratorOfCommunity: builder.query<
+      { isMod: boolean },
+      { communityId: number }
+    >({
+      query: (community) => ({
+        url: `/is_bot_moderator_of_community`,
+        method: "POST",
+        body: {
+          communityId: community.communityId,
+        },
+      }),
+    }),
   }),
 });
 
-export const { useGetPersonQuery } = utilApi;
+export const { useGetPersonQuery, useLazyIsBotModeratorOfCommunityQuery } = utilApi;
 export default utilApi;

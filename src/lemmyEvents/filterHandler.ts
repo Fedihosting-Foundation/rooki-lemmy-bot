@@ -39,7 +39,7 @@ export default class FilterHandler {
               });
             }, 5000);
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
@@ -62,7 +62,7 @@ export default class FilterHandler {
               reason: `Found a filtered word: '${found.value}' !`,
             });
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
@@ -84,7 +84,7 @@ export default class FilterHandler {
               reason: `Found a filtered word: '${found.value}' !`,
             });
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
@@ -101,7 +101,7 @@ export default class FilterHandler {
           case "log":
           default:
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in the body or title! Action: ${x.action}`,
                   embeds: [LogHelper.postToEmbed(event.data)],
@@ -149,7 +149,7 @@ export default class FilterHandler {
               });
             }, 5000);
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
@@ -172,7 +172,7 @@ export default class FilterHandler {
               reason: `Found a filtered word: '${found.value}' !`,
             });
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
@@ -194,7 +194,7 @@ export default class FilterHandler {
               reason: `Found a filtered word: '${found.value}' !`,
             });
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}! Action: ${x.action}`,
                   embeds: [LogHelper.commentToEmbed(event.data)],
@@ -212,7 +212,7 @@ export default class FilterHandler {
           case "log":
           default:
             if (event.config?.logConfig.discord.filterlog)
-              LogService.Log(
+              await LogService.Log(
                 {
                   content: `Found a Match for ${x.id} in ${event.data.comment.content}!`,
                   embeds: [LogHelper.commentToEmbed(event.data)],

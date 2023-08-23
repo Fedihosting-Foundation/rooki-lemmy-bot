@@ -1,4 +1,5 @@
 import {
+  Alert,
   Autocomplete,
   Avatar,
   Box,
@@ -16,6 +17,8 @@ import {
   Divider,
   IconButton,
   ListItem,
+  Portal,
+  Snackbar,
   SxProps,
   TextField,
   Tooltip,
@@ -47,6 +50,7 @@ import { CommentReportView, PostReportView } from "lemmy-js-client";
 import { CommentCard } from "./Comment";
 import { PostCard } from "./Post";
 import RotateLeftIcon from "@mui/icons-material/RotateLeft";
+import LinkIcon from "@mui/icons-material/Link";
 
 const filter = createFilterOptions<{
   label?: string;
@@ -56,6 +60,7 @@ const filter = createFilterOptions<{
 export const ReportEntry = (props: {
   data: IModQueueEntry<PostReportView | CommentReportView>;
   sx?: SxProps;
+  onAction: (id: string) => void;
 }) => {
   const [result, setResult] = useState<QueueEntryResult | undefined>();
   const [refresh, { isLoading }] = useRefreshModMessageMutation();
@@ -64,10 +69,14 @@ export const ReportEntry = (props: {
   const [modNoteModalOpen, setModNoteModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const isCommentReport = "comment" in props.data.entry;
+  const [open, setOpen] = useState(false);
 
   const handleModalClickOpen = () => {
     setModalOpen(true);
   };
+
+  const [updatePost] = useUpdateModqueueMutation();
+  const [addModNote] = useAddModMessageMutation();
 
   const handleModalClose = (cancel: boolean) => {
     if (!cancel) {
@@ -75,22 +84,30 @@ export const ReportEntry = (props: {
         id: props.data.id,
         result: result,
         reason: reason,
-      });
+      })
+        .unwrap()
+        .then((res) => {
+          if (res) {
+            props.onAction(props.data.id);
+          }
+        });
       setResult(undefined);
     }
     setModalOpen(false);
   };
 
-  const [updatePost] = useUpdateModqueueMutation();
-  const [addModNote] = useAddModMessageMutation();
   const completed = props.data.status === QueueEntryStatus.Completed;
-  const resolved = isCommentReport ? (props.data.entry as CommentReportView).comment_report.resolved : (props.data.entry as PostReportView).post_report.resolved;
+  const resolved = isCommentReport
+    ? (props.data.entry as CommentReportView).comment_report.resolved
+    : (props.data.entry as PostReportView).post_report.resolved;
   const [postExpanded, setPostExpanded] = useState(
     !IModQueueUtils.isResolved(props.data.entry)
   );
 
   useEffect(() => {
-    setPostExpanded(props.data.status === QueueEntryStatus.Pending && !resolved);
+    setPostExpanded(
+      props.data.status === QueueEntryStatus.Pending && !resolved
+    );
   }, [props.data.status, resolved]);
 
   const handleUpdateClick = (res?: QueueEntryResult) => {
@@ -132,9 +149,29 @@ export const ReportEntry = (props: {
         action={
           <Box>
             <IconButton
+              onClick={async (ev) => {
+                ev.stopPropagation();
+                const text =
+                  window.location.href + "modqueue/" + props.data.id;
+
+                if ("clipboard" in navigator) {
+                  await navigator.clipboard.writeText(text);
+                } else {
+                  document.execCommand("copy", true, text);
+                }
+                setOpen(true);
+              }}
+            >
+              <LinkIcon />
+            </IconButton>
+            <IconButton
               disabled={isLoading}
               onClick={() => {
-                refresh(props.data.id);
+                refresh(props.data.id)
+                  .unwrap()
+                  .then(() => {
+                    props.onAction(props.data.id);
+                  });
               }}
             >
               <RefreshIcon />
@@ -276,21 +313,7 @@ export const ReportEntry = (props: {
               }
             />
           </Box>
-          {props.data.entry.post.url ? (
-            <>
-              <Button
-                sx={{ mb: 1 }}
-                onClick={() => {
-                  window.open(props.data.entry.post.url, "_blank");
-                }}
-              >
-                URL: {props.data.entry.post.url}
-              </Button>
-              <Divider />
-            </>
-          ) : (
-            <></>
-          )}
+          <Divider />
 
           {props.data.modNote ? (
             <Box>
@@ -345,7 +368,7 @@ export const ReportEntry = (props: {
             }}
             sx={{ ml: "25px", mr: "10px", borderLeft: "5px black solid" }}
             elevation={12}
-            />
+          />
         )}
         <CardActions disableSpacing>
           <Tooltip
@@ -512,7 +535,13 @@ export const ReportEntry = (props: {
               addModNote({
                 modNote: modNote,
                 id: props.data.id,
-              });
+              })
+                .unwrap()
+                .then((res) => {
+                  if (res) {
+                    props.onAction(props.data.id);
+                  }
+                });
               setModNote("");
               setModNoteModalOpen(false);
             }}
@@ -521,6 +550,22 @@ export const ReportEntry = (props: {
           </Button>
         </DialogActions>
       </Dialog>
+      <Portal>
+        <Snackbar
+          open={open}
+          autoHideDuration={6000}
+          onClose={() => setOpen(false)}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        >
+          <Alert
+            onClose={() => setOpen(false)}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            Copied the URL to the clipboard!
+          </Alert>
+        </Snackbar>
+      </Portal>
     </Card>
   );
 };

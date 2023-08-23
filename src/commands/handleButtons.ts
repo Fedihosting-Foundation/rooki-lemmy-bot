@@ -99,12 +99,12 @@ export default class LogCommands {
             ? getActionForComment(data)
             : getActionForPost(data),
       });
-      initialInteraction.editReply({
+      await initialInteraction.editReply({
         content: "Updated!",
       });
     } catch (exc) {
       console.log(exc);
-      initialInteraction.editReply({
+      await initialInteraction.editReply({
         content: "Something went wrong!",
       });
     }
@@ -169,7 +169,7 @@ export default class LogCommands {
       modal.addComponents(firstRow, secondRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));
         return i.user.id === initialInteraction.user.id;
       };
       await initialInteraction.showModal(modal);
@@ -182,7 +182,7 @@ export default class LogCommands {
         interaction.fields.getTextInputValue(key)
       );
 
-      const banResult = await client.banFromCommunity({
+      await client.banFromCommunity({
         auth: getAuth(),
         ban: banned,
         community_id: communityId,
@@ -214,7 +214,7 @@ export default class LogCommands {
       });
     } catch (exc) {
       console.log(exc);
-      initialInteraction.channel?.send(
+      await initialInteraction.channel?.send(
         `Something went wrong ${initialInteraction.user.toString()}!`
       );
     }
@@ -265,7 +265,7 @@ export default class LogCommands {
       modal.addComponents(firstRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));;
         return i.user.id === initialInteraction.user.id;
       };
       await initialInteraction.showModal(modal);
@@ -361,7 +361,7 @@ export default class LogCommands {
       modal.addComponents(firstRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));;
         return i.user.id === initialInteraction.user.id;
       };
       await initialInteraction.showModal(modal);
@@ -440,7 +440,7 @@ export default class LogCommands {
       modal.addComponents(firstRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));;
         return i.user.id === initialInteraction.user.id;
       };
 
@@ -520,7 +520,7 @@ export default class LogCommands {
       modal.addComponents(firstRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));;
         return i.user.id === initialInteraction.user.id;
       };
       await initialInteraction.showModal(modal);
@@ -605,7 +605,7 @@ export default class LogCommands {
       modal.addComponents(firstRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));;
         return i.user.id === initialInteraction.user.id;
       };
       await initialInteraction.showModal(modal);
@@ -696,7 +696,7 @@ export default class LogCommands {
       modal.addComponents(firstRow);
 
       const collectorFilter = (i: ModalSubmitInteraction) => {
-        i.deferUpdate();
+        i.deferUpdate().catch(x => console.log(x));;
         return i.user.id === initialInteraction.user.id;
       };
 

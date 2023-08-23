@@ -61,7 +61,7 @@ async function checkForBadLanguage(
           undefined;
       }
       if (!channel) return;
-      channel.send({
+      await channel.send({
         content: "Profanity detected!",
         embeds: [embed],
         components: [...getActionForComment(data)],
@@ -80,7 +80,7 @@ async function checkForBadLanguage(
           undefined;
       }
       if (!channel) return;
-      channel.send({
+      await channel.send({
         content: "Profanity detected!",
         embeds: [embed],
         components: [...getActionForPost(data)],

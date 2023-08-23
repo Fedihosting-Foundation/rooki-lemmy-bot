@@ -1,4 +1,3 @@
-import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ModQueue } from "./routes/ModQueue";
 import { useAppDispatch, useAppSelector } from "./redux/hooks";
@@ -7,6 +6,8 @@ import Login from "./routes/Login";
 import client from "./lemmyClient";
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
+import { CommunityConfig } from "./routes/CommunityConfig";
+import NavigationDrawer from "./components/NavigationDrawer";
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,12 +37,22 @@ function App() {
   } else if (loading) {
     setLoading(false);
   }
-  if (loading) return <CircularProgress />;
+  if (loading) return <CircularProgress sx={{
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)"
+  }}/>;
   return (
     <BrowserRouter>
       <Routes>
         {currentUser ? (
-          <Route path="*" element={<ModQueue />} />
+          <Route element={<NavigationDrawer />}>
+            <Route path="/config" element={<CommunityConfig />} />
+            <Route path="/modqueue/:id" element={<ModQueue />} />
+            <Route path="*" element={<ModQueue />} />
+
+          </Route>
         ) : (
           <Route path="*" element={<Login />} />
         )}

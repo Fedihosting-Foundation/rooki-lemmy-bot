@@ -28,7 +28,7 @@ export default class LogCommands {
       await interaction.editReply({ embeds: [embed] });
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -56,7 +56,7 @@ export default class LogCommands {
       await interaction.editReply({ embeds: [embed] });
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 
@@ -83,7 +83,7 @@ export default class LogCommands {
       await interaction.editReply({ embeds: [embed] });
     } catch (exc) {
       console.log(exc);
-      interaction.editReply("Something went wrong");
+      await interaction.editReply("Something went wrong");
     }
   }
 }

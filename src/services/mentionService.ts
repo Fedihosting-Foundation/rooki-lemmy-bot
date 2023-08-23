@@ -25,7 +25,7 @@ class mentionService extends baseService<
         const mention = input as PersonMentionView;
         try {
           const config = await this.CommunityConfigService.getCommunityConfig(
-            mention.community
+            mention.community.id
           );
           const foundMention = await this.repository.findOne({
             where: { "comment.id": { $eq: mention.comment.id } },

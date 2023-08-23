@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import CommunityService from "../../services/communityService";
 import { typeDiDependencyRegistryEngine } from "discordx";
-import client from "../../main";
+import { getUserFromSite } from "../../helpers/lemmyHelper";
+import { GetPersonDetails } from "lemmy-js-client";
 let communityServ: CommunityService | undefined;
 
 function getCommunityService() {
@@ -22,19 +23,14 @@ const authMiddleware = async (
     res.status(401).send("No Token");
     return;
   }
-  const user = Number(headers.user);
-  if (!user) {
-    res.status(401).send("No User");
+  const details = await getUserFromSite(token);
+  if(!details){
+    res.status(401).send("User not valid");
     return;
   }
- 
+  
+  req.personDetails = details;
 
-  const foundUser = await getCommunityService()?.getUser({ id: user }, false, client);
-
-  if (!foundUser) {
-    res.status(401).send("User not found");
-    return;
-  }
   next();
 };
 export default authMiddleware;

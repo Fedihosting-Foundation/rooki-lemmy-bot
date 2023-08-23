@@ -20,7 +20,7 @@ export default class LogService {
         channel = (channel.threads.cache.get(logData.options.threadId) || await channel.threads.fetch(logData.options.threadId)) ||undefined;
       }
       if (!channel) return;
-      channel.send(message)
+      await channel.send(message)
 
     } catch (err) {
       console.log(err);

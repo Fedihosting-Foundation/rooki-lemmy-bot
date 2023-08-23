@@ -1,4 +1,3 @@
-import { CommentReportView, PostReportView, PostView } from "lemmy-js-client";
 import { Inject, Service } from "typedi";
 import "reflect-metadata";
 import CommunityService from "./communityService";
@@ -38,15 +37,25 @@ class modQueueService {
     return await this.repository.save(data);
   }
 
-  async getModQueueEntryById(id: string) {
-    return await this.repository.findOne({
-      where: { _id: { $eq: new ObjectId(id) } },
+  async fetchCommunities() {
+    return await this.repository.find({
+      select: { entry: { community: true } },
     });
+  }
+
+  async getModQueueEntryById(id: string) {
+    try {
+      return await this.repository.findOne({
+        where: { _id: { $eq: new ObjectId(id) } },
+      });
+    } catch (e) {
+      console.log("ERROR", e);
+    }
   }
 
   async getModQueueEntriesByCommunity(communityId: string) {
     return await this.repository.find({
-      where: { "entry.post.community.id": { $eq: communityId } },
+      where: { "entry.community.id": { $eq: communityId } },
     });
   }
 
@@ -70,6 +79,31 @@ class modQueueService {
       where: { "entry.post_report.id": { $eq: postReportId } },
     });
   }
+
+  async getModQueueEntriesAfterId(
+    id: string | undefined,
+    communityIds: number[] | false,
+    limit: number = 20
+  ) {
+    try {
+      const query: any = {};
+      if (id) {
+        query._id = { $lte: new ObjectId(id) };
+      }
+
+      if (communityIds) {
+        query["entry.community.id"] = { $in: communityIds };
+      }
+      return await this.repository.find({
+        where: query,
+        order: { _id: -1 },
+        take: limit,
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   async removeModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
     return await this.repository.delete(data);
   }
@@ -77,8 +111,13 @@ class modQueueService {
   async refreshModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
     console.log("REFRESHING MOD QUEUE ENTRY", data);
     if ("comment_report" in data.entry) {
-      const list = (await client.listCommentReports({ auth: getAuth(), unresolved_only: false, community_id: data.entry.community.id }))
-        .comment_reports;
+      const list = (
+        await client.listCommentReports({
+          auth: getAuth(),
+          unresolved_only: false,
+          community_id: data.entry.community.id,
+        })
+      ).comment_reports;
       await asyncForEach(list, async (report) => {
         const foundReport = await this.getModQueueEntryByCommentReportId(
           report.comment_report.id
@@ -86,28 +125,32 @@ class modQueueService {
         if (foundReport) {
           foundReport.entry = report;
           await this.updateModQueueEntry(foundReport);
-        }else{
-          console.log("NOT FOUND REPORT Creating:", report)
-          await this.addModQueueEntry(report)
+        } else {
+          console.log("NOT FOUND REPORT Creating:", report);
+          await this.addModQueueEntry(report);
         }
-      
       });
       return;
     } else if ("post_report" in data.entry) {
-      const list = (await client.listPostReports({ auth: getAuth(), unresolved_only: false, community_id: data.entry.community.id }))
-        .post_reports;
-        console.log("UPADTING POST REPORT")
+      const list = (
+        await client.listPostReports({
+          auth: getAuth(),
+          unresolved_only: false,
+          community_id: data.entry.community.id,
+        })
+      ).post_reports;
+      console.log("UPADTING POST REPORT");
       await asyncForEach(list, async (report) => {
         const foundReport = await this.getModQueueEntryByPostReportId(
           report.post_report.id
         );
-        console.log("FOUND REPORT", foundReport)
+        console.log("FOUND REPORT", foundReport);
         if (foundReport) {
           foundReport.entry = report;
           await this.updateModQueueEntry(foundReport);
-        }else{
-          console.log("NOT FOUND REPORT Creating:", report)
-          await this.addModQueueEntry(report)
+        } else {
+          console.log("NOT FOUND REPORT Creating:", report);
+          await this.addModQueueEntry(report);
         }
       });
 
