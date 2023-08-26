@@ -59,6 +59,7 @@ import {
 } from "../../redux/reducers/SettingsReducer";
 import LinkIcon from "@mui/icons-material/Link";
 import { useLocation } from "react-router-dom";
+import { Chart } from "../CreatorChart/Chart";
 const filter = createFilterOptions<{
   label?: string;
   value: string;
@@ -547,6 +548,14 @@ export const PostEntry = (props: {
             ) : (
               <>Loading...</>
             )}
+            <Box sx={{
+              height: "500px",
+              width: "100%",
+              backgroundColor: "grey",
+            }}>
+            <Chart data={{creator: props.data.entry.creator}} />
+            {/* <D3Chart person={props.data.entry.creator} /> */}
+            </Box>
           </CardContent>
         </Collapse>
       </Collapse>
