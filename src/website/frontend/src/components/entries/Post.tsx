@@ -10,24 +10,35 @@ import {
   Typography,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import config from "../../config";
 import { extractInstanceFromActorId, getActorId } from "../../util/utils";
-import { Community, Post } from "lemmy-js-client";
-import { useGetPersonQuery } from "../../redux/api/UtilApi";
+import { Community, GetPersonDetailsResponse, Post } from "lemmy-js-client";
 import ReactMarkdown from "react-markdown";
 import Spotlight from "../Spotlight";
+import client from "../../lemmyClient";
 
 export const PostCard = (props: {
   data: { entry: Post; community: Community };
   sx?: SxProps;
   elevation?: number;
+  hidePicture?: boolean;
 }) => {
   const [hoverAvatar, setHoverAvatar] = useState(false);
-  const { data: Creator, isLoading } = useGetPersonQuery({
-    userId: props.data.entry.creator_id,
-  });
-  if (isLoading || !Creator)
+  const [noThumbnail, setNoThumbnail] = useState(props.hidePicture === true);
+  const [Creator, setCreator] = useState<GetPersonDetailsResponse>();
+  useEffect(() => {
+    client
+      .getPersonDetails({
+        auth: localStorage.getItem("jwt") || undefined,
+        person_id: props.data.entry.creator_id,
+      })
+      .then((res) => {
+        setCreator(res);
+      });
+  }, [props.data.entry.creator_id]);
+
+  if (!Creator)
     return (
       <Card sx={{ ...props.sx }}>
         <div>Loading...</div>
@@ -68,7 +79,6 @@ export const PostCard = (props: {
             <Typography
               sx={{
                 mr: "15px",
-                //   textDecoration: deleted || removed ? "line-through" : "none",
                 textDecorationColor: "red",
                 textDecorationThickness: "5px",
                 cursor: "pointer",
@@ -150,7 +160,8 @@ export const PostCard = (props: {
         }
       />
       <CardContent>
-        {props.data.entry.thumbnail_url ? (
+        {(props.data.entry.thumbnail_url || props.data.entry.url) &&
+        !noThumbnail ? (
           <Box
             sx={{
               position: "relative",
@@ -159,7 +170,11 @@ export const PostCard = (props: {
             <Spotlight>
               <CardMedia
                 component="img"
-                image={props.data.entry.thumbnail_url}
+                onError={(e) => {
+                  console.log(e);
+                  setNoThumbnail(true);
+                }}
+                image={props.data.entry.thumbnail_url || props.data.entry.url}
                 alt="Thumbnail Url"
               />
             </Spotlight>
@@ -167,20 +182,23 @@ export const PostCard = (props: {
         ) : (
           <></>
         )}
-                 {props.data.entry.url ? (
-            <>
-              <Button
-                sx={{ mb: 1 }}
-                onClick={() => {
-                  window.open(props.data.entry.url, "_blank");
-                }}
-              >
-                URL: {props.data.entry.url}
-              </Button>
-            </>
-          ) : (
-            <></>
-          )}
+        {props.data.entry.thumbnail_url || props.data.entry.url ? (
+          <>
+            <Button
+              sx={{ mb: 1 }}
+              onClick={() => {
+                window.open(
+                  props.data.entry.thumbnail_url || props.data.entry.url,
+                  "_blank"
+                );
+              }}
+            >
+              URL: {props.data.entry.thumbnail_url || props.data.entry.url}
+            </Button>
+          </>
+        ) : (
+          <></>
+        )}
 
         {props.data.entry.body ? (
           <ReactMarkdown children={props.data.entry.body} />

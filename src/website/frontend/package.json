@@ -9,7 +9,6 @@
     "@fontsource/roboto": "^5.0.8",
     "@mui/icons-material": "^5.14.3",
     "@mui/material": "^5.14.5",
-    "@nivo/api": "^0.74.1",
     "@nivo/network": "^0.83.0",
     "@react-sigma/core": "^3.4.2",
     "@react-sigma/layout-core": "^3.4.2",

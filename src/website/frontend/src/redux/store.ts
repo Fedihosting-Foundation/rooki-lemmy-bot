@@ -18,6 +18,7 @@ import { setupListeners } from "@reduxjs/toolkit/dist/query";
 import utilApi from "./api/UtilApi";
 import modConfigApi from "./api/ModConfigApi";
 import CommunitySettingsReducer from "./reducers/CommunitySettingsReducer";
+import adminLogsAPI from "./api/AdminLogsAPI";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     [modLogApi.reducerPath]: modLogApi.reducer,
     [utilApi.reducerPath]: utilApi.reducer,
     [modConfigApi.reducerPath]: modConfigApi.reducer,
+    [adminLogsAPI.reducerPath]: adminLogsAPI.reducer,
   },
   middleware: (getDefaultMiddleware) => 
    getDefaultMiddleware({
@@ -39,7 +41,8 @@ export const store = configureStore({
       .concat(modLogApi.middleware)
       .concat(modQueueApi.middleware)
       .concat(utilApi.middleware)
-      .concat(modConfigApi.middleware),
+      .concat(modConfigApi.middleware)
+      .concat(adminLogsAPI.middleware),
 });
 
 setupListeners(store.dispatch);

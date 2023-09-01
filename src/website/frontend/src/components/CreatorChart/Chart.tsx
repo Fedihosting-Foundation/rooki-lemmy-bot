@@ -1,8 +1,13 @@
-import { Community, Person } from "lemmy-js-client";
+import {
+  CommentView,
+  Community,
+  GetPersonDetailsResponse,
+  Person,
+  PostView,
+} from "lemmy-js-client";
 import { useEffect, useState } from "react";
 import { extractInstanceFromActorId, getActorId } from "../../util/utils";
 import { asyncForEach } from "../../util/AsyncForeach";
-import { useGetPersonQuery } from "../../redux/api/UtilApi";
 import {
   SigmaContainer,
   useLoadGraph,
@@ -17,6 +22,7 @@ import getNodeProgramImage from "sigma/rendering/webgl/programs/node.image";
 import FA2Layout from "graphology-layout-forceatlas2/worker";
 import client from "../../lemmyClient";
 import config from "../../config";
+import { Typography } from "@mui/material";
 interface Link {
   id: string;
   source: string;
@@ -39,12 +45,13 @@ function randomIntFromInterval(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-const LoadGraph = (props: { data: { creator: Person } }) => {
+const LoadGraph = (props: {
+  data: { person: Person; posts: PostView[]; comments: CommentView[] };
+}) => {
   const loadGraph = useLoadGraph();
   const sigma = useSigma();
   const registerEvents = useRegisterEvents();
   const [draggedNode, setDraggedNode] = useState<string | null>(null);
-
   const instanceSize = 7,
     communitySize = 6,
     postSize = 5,
@@ -52,14 +59,23 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
     selfIncrease = 2;
   const selfColor = "#ff0000",
     instanceConnection = "#00ff00";
+  const simConfig = {
+    getEdgeWeight: 1,
+    settings: {
+      barnesHutOptimize: true,
+      slowDown: 50 + Math.log(1000),
+      edgeWeightInfluence: 0.25,
+      gravity: 0.25,
+      linLogMode: true,
+      strongGravityMode: false,
+    },
+  };
 
-  const holdTimeout: number = 0;
 
   const handleNodeClick = (event: any) => {
     event.preventSigmaDefault();
     const node = event.node;
     const nodeData = sigma.getGraph().getNodeAttributes(node);
-    console.log(nodeData);
     if (nodeData.community) {
       window.open(config.instance + "c/" + nodeData.community.name, "_blank");
       return;
@@ -93,11 +109,14 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
         if (draggedNode) {
           setDraggedNode(null);
           sigma.getGraph().removeNodeAttribute(draggedNode, "highlighted");
+         
         }
+       
       },
       mousedown: (e) => {
         // Disable the autoscale at the first down interaction
         if (!sigma.getCustomBBox()) sigma.setCustomBBox(sigma.getBBox());
+     
       },
       mousemove: (e) => {
         if (draggedNode) {
@@ -137,20 +156,7 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
     });
   }, [registerEvents, sigma, draggedNode]);
 
-  const {
-    data: user,
-    isLoading,
-    isFetching,
-  } = useGetPersonQuery(
-    {
-      userId: props.data.creator.id,
-    },
-    {
-      pollingInterval: 15 * 60 * 1000,
-    }
-  );
   useEffect(() => {
-    if (isLoading || isFetching || !user) return;
     const graph = new MultiDirectedGraph();
     const instanceNodes: {
       [key: string]: Node;
@@ -164,21 +170,19 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
     const commentNodes: Node[] = [];
     const newLinks: Link[] = [];
 
-    const isLocalUser = user.person_view.person.local;
+    const isLocalUser = props.data.person.local;
     let sourceNode: Node = {
       id: "user-source",
-      label: user.person_view.person.name,
+      label: props.data.person.name,
       x: 0,
       y: 0,
       size: 10,
       type: "image",
-      image: user.person_view.person.avatar,
+      image: props.data.person.avatar,
       fixed: true,
     };
     if (!isLocalUser) {
-      const instance = extractInstanceFromActorId(
-        user.person_view.person.actor_id
-      );
+      const instance = extractInstanceFromActorId(props.data.person.actor_id);
       const users_instance: Node = {
         id: "instance-" + instance,
         label: instance,
@@ -187,7 +191,7 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
         size: instanceSize,
         fixed: true,
       };
-      const name = getActorId(instance, user.person_view.person.name);
+      const name = getActorId(instance, props.data.person.name);
 
       const userNode: Node = {
         id: "user-source",
@@ -196,7 +200,7 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
         y: -10,
         size: 10,
         type: "image",
-        image: user.person_view.person.avatar,
+        image: props.data.person.avatar,
         fixed: true,
       };
       graph.addNode("user-source", userNode);
@@ -244,7 +248,7 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
     }
 
     (async () => {
-      await asyncForEach(user.posts, async (post) => {
+      await asyncForEach(props.data.posts, async (post) => {
         const community = post.community;
         if (!communityNodes[community.id]) {
           communityNodes[community.id] = {
@@ -324,7 +328,7 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
           target: "post-" + post.post.id,
         });
       });
-      await asyncForEach(user.comments, async (comment) => {
+      await asyncForEach(props.data.comments, async (comment) => {
         const community = comment.community;
         if (!communityNodes[community.id]) {
           communityNodes[community.id] = {
@@ -405,13 +409,13 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
             id: "post-" + comment.post.id,
             label: "Post: " + comment.post.name,
             color:
-              comment.post.creator_id === user.person_view.person.id
+              comment.post.creator_id === props.data.person.id
                 ? selfColor
                 : "#000000",
             x: randomIntFromInterval(0, 10),
             y: randomIntFromInterval(0, 10),
             size:
-              comment.post.creator_id === user.person_view.person.id
+              comment.post.creator_id === props.data.person.id
                 ? postSize + selfIncrease
                 : postSize,
           };
@@ -458,17 +462,7 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
       });
 
       loadGraph(graph);
-      const layout = new FA2Layout(sigma.getGraph(), {
-        getEdgeWeight: 1,
-        settings: {
-          barnesHutOptimize: true,
-          slowDown: 50 + Math.log(1000),
-          edgeWeightInfluence: 0.25,
-          gravity: 0.25,
-          linLogMode: true,
-          strongGravityMode: false,
-        },
-      });
+      const layout = new FA2Layout(sigma.getGraph(), simConfig);
       if (layout.isRunning()) {
         return;
       }
@@ -477,11 +471,42 @@ const LoadGraph = (props: { data: { creator: Person } }) => {
         layout.stop();
       }, 5000);
     })();
-  }, [isFetching, isLoading, sigma, user]);
+  }, [
+    loadGraph,
+    props.data.comments,
+    props.data.person.actor_id,
+    props.data.person.avatar,
+    props.data.person.id,
+    props.data.person.local,
+    props.data.person.name,
+    props.data.posts,
+    sigma,
+    simConfig,
+  ]);
   return null;
 };
 
-export const Chart = (props: { data: { creator: Person } }) => {
+export const Chart = (props: { data: { person: Person } }) => {
+  const [comments, setComments] = useState<CommentView[]>([]);
+  const [posts, setPosts] = useState<PostView[]>([]);
+  useEffect(() => {
+    (async () => {
+      const comments: CommentView[] = [];
+      const posts: PostView[] = [];
+
+      const data = await client.getPersonDetails({
+        person_id: props.data.person.id,
+        auth: localStorage.getItem("jwt") || undefined,
+      });
+      comments.push(...data.comments);
+      posts.push(...data.posts);
+      setComments(comments);
+      setPosts(posts);
+    })();
+  }, [props.data.person.id]);
+
+  if (comments.length === 0 && posts.length === 0)
+    return <Typography>Loading...</Typography>;
   return (
     <SigmaContainer
       settings={{
@@ -496,7 +521,7 @@ export const Chart = (props: { data: { creator: Person } }) => {
       }}
       style={{ height: "500px", width: "100%" }}
     >
-      <LoadGraph data={props.data} />
+      <LoadGraph data={{ ...props.data, comments: comments, posts: posts }} />
     </SigmaContainer>
   );
 };

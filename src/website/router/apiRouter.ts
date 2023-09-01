@@ -15,11 +15,14 @@ import {
 } from "../../models/modQueueEntryModel";
 import UserInfoResponse from "../../models/userInfoResponse";
 import modLogService from "../../services/modLogService";
-import authMiddleware from "../middlewares/authMiddleware";
+import authMiddleware, {
+  adminAuthMiddleware,
+} from "../middlewares/authMiddleware";
 import communityConfigRouter from "./communityConfigApiRouter";
 import utilRouter from "./utilRouter";
 import { CommentReportView, Community, PostReportView } from "lemmy-js-client";
 import { asyncFilter } from "../../utils/AsyncFilter";
+import adminApiRouter from "./adminRouter";
 
 let modService: modQueueService | undefined;
 
@@ -82,6 +85,7 @@ apiRouter.use(authMiddleware);
 
 apiRouter.use("/utils", utilRouter);
 apiRouter.use("/config", communityConfigRouter);
+apiRouter.use("/adminLogs", adminApiRouter);
 
 apiRouter.post("/modqueue", async (req, res) => {
   const service = getModQueueService();
@@ -96,8 +100,11 @@ apiRouter.post("/modqueue", async (req, res) => {
     return;
   }
 
-  const body = req.body as { id: string | undefined; communities: number[], amount?: number };
-  console.log(body);
+  const body = req.body as {
+    id: string | undefined;
+    communities: number[];
+    amount?: number;
+  };
   const entries = await service.getModQueueEntriesAfterId(
     body.id,
     body.communities.length > 0
@@ -109,7 +116,7 @@ apiRouter.post("/modqueue", async (req, res) => {
       : user.local_user_view.person.admin
       ? false
       : user.moderates.map((x) => x.community.id),
-      body.amount ? body.amount : 20
+    body.amount ? body.amount : 20
   );
   res.json(entries);
 });
@@ -173,13 +180,14 @@ apiRouter.get("/modqueue/getone/:id", async (req, res) => {
     return;
   }
 
-  if (!(isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
+  if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
     res.status(401).send("User is not mod");
     return;
   }
 
   res.json(entry);
 });
+
 apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -208,9 +216,7 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
       return;
     }
 
-    if (
-      !(await isModOfCommunityPersonResponse(user, entry.entry.community.id))
-    ) {
+    if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
       res.status(401).send("User is not mod");
       return;
     }
@@ -232,6 +238,7 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
 apiRouter.put("/modqueue/resolve", async (req, res) => {
   const service = getModQueueService();
   if (!service) {

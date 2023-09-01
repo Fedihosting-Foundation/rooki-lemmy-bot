@@ -50,7 +50,10 @@ class CommandHandler {
     if (!commandData) return;
     const { data, fn } = commandData;
 
-    const isMod = await isModOfCommunityPerson(event.data.creator, event.data.community.id);
+    const isMod = await isModOfCommunityPerson(
+      event.data.creator,
+      event.data.community.id
+    );
 
     if (data.data.modOnly && !isMod) {
       console.log("Not mod");

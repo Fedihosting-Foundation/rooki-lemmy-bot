@@ -1,16 +1,16 @@
 import {
   Comment,
+  CommentView,
   Community,
-  GetPersonDetails,
   GetPersonDetailsResponse,
   Person,
   Post,
+  PostView,
 } from "lemmy-js-client";
-import { useGetPersonQuery } from "../../redux/api/UtilApi";
-import { LegacyRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { extractInstanceFromActorId, getActorId } from "../../util/utils";
 import * as d3 from "d3";
-import { Box } from "@mui/material";
+import client from "../../lemmyClient";
 
 interface Node extends d3.SimulationNodeDatum {
   id: string;
@@ -48,19 +48,17 @@ const getCommentNode = (comment: Comment) => {
   };
 };
 
-const getData = async (data: GetPersonDetailsResponse) => {
-  const isLocal = data.person_view.person.local;
-
+const getData = async (data: {person: Person, posts: PostView[], comments: CommentView[]}) => {
   const links: Link[] = [];
 
   const instanceNodes: Node[] = [];
   const communityNodes: Node[] = [];
   const userInstance = extractInstanceFromActorId(
-    data.person_view.person.actor_id
+    data.person.actor_id
   );
-  const userId = getActorId(userInstance, data.person_view.person.name);
+  const userId = getActorId(userInstance, data.person.name);
   const userNode: Node = {
-    id: "user-" + data.person_view.person.id,
+    id: "user-" + data.person.id,
     label: userId,
   };
 
@@ -90,7 +88,7 @@ const getData = async (data: GetPersonDetailsResponse) => {
       links.push({
         source: userInstanceNode.id,
         target: instanceNode.id,
-      })
+      });
     }
 
     links.push({
@@ -102,9 +100,11 @@ const getData = async (data: GetPersonDetailsResponse) => {
 
   const postNodes: Node[] = data.posts.map((post) => {
     const p = post.post;
-    let communityNode: Node | undefined = communityNodes.find((c) => c.id === "community-" + p.community_id)
+    let communityNode: Node | undefined = communityNodes.find(
+      (c) => c.id === "community-" + p.community_id
+    );
     if (!communityNode) {
-       communityNode = createdCommunityNodes(post.community);
+      communityNode = createdCommunityNodes(post.community);
     }
 
     const postNode: Node = getPostNode(p);
@@ -121,17 +121,19 @@ const getData = async (data: GetPersonDetailsResponse) => {
     const p = comment.post;
 
     if (!postNodes.find((p) => p.id === "post-" + c.post_id)) {
-        const postNode = getPostNode(p);
+      const postNode = getPostNode(p);
       postNodes.push(postNode);
-      let communityNode: Node | undefined = communityNodes.find((c) => c.id === "community-" + p.community_id)
-  
+      let communityNode: Node | undefined = communityNodes.find(
+        (c) => c.id === "community-" + p.community_id
+      );
+
       if (!communityNode) {
         communityNode = createdCommunityNodes(comment.community);
       }
       links.push({
         source: communityNode.id,
         target: postNode.id,
-    })
+      });
     }
     const commentNode: Node = getCommentNode(c);
 
@@ -160,21 +162,39 @@ export const D3Chart = (props: { person: Person }) => {
   const height = 500;
   const width = 500;
   const chartTimeout = useRef<NodeJS.Timeout | undefined>();
-  const {
-    data: user,
-    isLoading,
-    isFetching,
-  } = useGetPersonQuery(
-    {
-      userId: props.person.id,
-    },
-    {
-      pollingInterval: 15 * 60 * 1000,
-    }
-  );
+  const [comments, setComments] = useState<CommentView[]>([]);
+  const [posts, setPosts] = useState<PostView[]>([]);
+
+  useEffect(() => {
+    const comments: CommentView[] = [];
+    const posts: PostView[] = [];
+
+    let lastData: GetPersonDetailsResponse | undefined;
+    (async (person: Person) => {
+      let i = 0;
+      while (
+        !lastData ||
+        lastData.posts.length === 20 ||
+        lastData.comments.length === 20
+      ) {
+        lastData = await client.getPersonDetails({
+          auth: localStorage.getItem("jwt") || undefined,
+          person_id: person.id,
+          limit: 20,
+          page: i,
+        });
+        i++;
+        comments.push(...lastData.comments);
+        posts.push(...lastData.posts);
+      }
+      setComments(comments);
+      setPosts(posts);
+    })(props.person);
+  }, [props.person]);
+
   const color = d3.scaleOrdinal(d3.schemeCategory10);
   const chartRef = useRef<SVGSVGElement>();
-  const doChart = (data: {links: Link[], nodes: Node[]}) => {
+  const doChart = (data: { links: Link[]; nodes: Node[] }) => {
     if (!chartRef.current) return;
 
     const links = [...data.links.map((d) => ({ ...d }))];
@@ -268,10 +288,9 @@ export const D3Chart = (props: { person: Person }) => {
       .text(function (d) {
         return d.label;
       });
-  }
+  };
   useEffect(() => {
-    if (user) {
-      getData(user)
+      getData({ person: props.person, comments: comments, posts: posts})
         .then((data) => {
           if (chartRef.current) {
             if (chartTimeout.current) {
@@ -284,8 +303,7 @@ export const D3Chart = (props: { person: Person }) => {
         .catch((err) => {
           console.log(err);
         });
-    }
-  }, [user]);
+  }, [comments, posts]);
 
   return (
     <svg

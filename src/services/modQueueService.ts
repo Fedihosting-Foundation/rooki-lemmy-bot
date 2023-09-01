@@ -9,6 +9,13 @@ import postService from "./postService";
 import client, { getAuth } from "../main";
 import { asyncForEach } from "../utils/AsyncForeach";
 import { ObjectId } from "mongodb";
+import {
+  CommentReportResponse,
+  CommentReportView,
+  ListPostReportsResponse,
+  PostReportView,
+} from "lemmy-js-client";
+import { sleep } from "../helpers/lemmyHelper";
 
 @Service()
 class modQueueService {
@@ -64,7 +71,14 @@ class modQueueService {
       where: { "entry.creator.id": { $eq: userId } },
     });
   }
-  async getModQueueEntryByPostId(postId: number) {
+  async getModQueueEntryByPostId(postId: number, ignoreReports: boolean = false) {
+    const query: any = {
+      where: { "entry.post.id": { $eq: postId } },
+    };
+    if (ignoreReports) {
+      query.where["entry.post_report"] = { $exists: false };
+      query.where["entry.comment_report"] = { $exists: false };
+    }
     return await this.repository.findOne({
       where: { "entry.post.id": { $eq: postId } },
     });
@@ -109,15 +123,20 @@ class modQueueService {
   }
 
   async refreshModQueueEntry(data: ModQueueEntryModel<allowedEntries>) {
-    console.log("REFRESHING MOD QUEUE ENTRY", data);
     if ("comment_report" in data.entry) {
-      const list = (
-        await client.listCommentReports({
+      const list: CommentReportView[] = [];
+      let i = 1;
+      for (i; i < 5; i++) {
+        const reports = await client.listCommentReports({
           auth: getAuth(),
           unresolved_only: false,
           community_id: data.entry.community.id,
-        })
-      ).comment_reports;
+        });
+
+        list.push(...reports.comment_reports);
+        i++;
+        await sleep(2000)
+      }
       await asyncForEach(list, async (report) => {
         const foundReport = await this.getModQueueEntryByCommentReportId(
           report.comment_report.id
@@ -126,30 +145,34 @@ class modQueueService {
           foundReport.entry = report;
           await this.updateModQueueEntry(foundReport);
         } else {
-          console.log("NOT FOUND REPORT Creating:", report);
+          console.log("NOT FOUND COMMENT REPORT Creating:", report);
           await this.addModQueueEntry(report);
         }
       });
       return;
     } else if ("post_report" in data.entry) {
-      const list = (
-        await client.listPostReports({
+      const list: PostReportView[] = [];
+      let i = 1;
+      for (i; i < 5; i++) {
+        const reports = await client.listPostReports({
           auth: getAuth(),
           unresolved_only: false,
           community_id: data.entry.community.id,
-        })
-      ).post_reports;
-      console.log("UPADTING POST REPORT");
+        });
+
+        list.push(...reports.post_reports);
+        i++;
+        await sleep(2000)
+      }
       await asyncForEach(list, async (report) => {
         const foundReport = await this.getModQueueEntryByPostReportId(
           report.post_report.id
         );
-        console.log("FOUND REPORT", foundReport);
         if (foundReport) {
           foundReport.entry = report;
           await this.updateModQueueEntry(foundReport);
         } else {
-          console.log("NOT FOUND REPORT Creating:", report);
+          console.log("NOT FOUND POST REPORT Creating:", report);
           await this.addModQueueEntry(report);
         }
       });

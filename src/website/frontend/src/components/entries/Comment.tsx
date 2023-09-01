@@ -8,12 +8,12 @@ import {
   Typography,
 } from "@mui/material";
 import { red } from "@mui/material/colors";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import config from "../../config";
 import { extractInstanceFromActorId, getActorId } from "../../util/utils";
-import { Comment, Community, Post } from "lemmy-js-client";
-import { useGetPersonQuery } from "../../redux/api/UtilApi";
+import { Comment, Community, GetPersonDetailsResponse, Post } from "lemmy-js-client";
 import ReactMarkdown from "react-markdown";
+import client from "../../lemmyClient";
 
 export const CommentCard = (props: {
   data: { entry: Comment, parent: Post, community: Community };
@@ -21,8 +21,16 @@ export const CommentCard = (props: {
   elevation?: number;
 }) => {
   const [hoverAvatar, setHoverAvatar] = useState(false);
-  const {data:Creator, isLoading} = useGetPersonQuery({userId: props.data.entry.creator_id})
-  if(isLoading || !Creator) return (<Card sx={{ ...props.sx }}>
+  const [Creator, setCreator] = useState<GetPersonDetailsResponse>();
+  useEffect(() => {
+    client
+      .getPersonDetails({ auth: localStorage.getItem("jwt") || undefined, person_id: props.data.entry.creator_id })
+      .then((res) => {
+        setCreator(res);
+      });
+  }, [props.data.entry.creator_id]);
+
+  if(!Creator) return (<Card sx={{ ...props.sx }}>
   <div>Loading...</div>
   </Card>)
 
