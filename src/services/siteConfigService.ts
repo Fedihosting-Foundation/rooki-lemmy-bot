@@ -2,13 +2,11 @@ import { Inject, Service } from "typedi";
 import "reflect-metadata";
 import CommunityService from "./communityService";
 import postService from "./postService";
-import client, { getAuth } from "../main";
-import userInfoRepository from "../repository/userInfoRepository";
 import siteConfigRepository from "../repository/siteConfigRepository";
 import SiteConfigModel from "../models/siteConfigModel";
 
 @Service()
-class modLogService {
+class siteConfigService {
   @Inject()
   repository: siteConfigRepository;
 
@@ -34,4 +32,4 @@ class modLogService {
   }
 }
 
-export default modLogService;
+export default siteConfigService;

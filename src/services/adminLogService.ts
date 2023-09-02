@@ -50,7 +50,7 @@ class adminLogService {
       const webhook = getSlackWebhook();
       if (webhook) {
         await webhook.send({
-          text: `*${action}* - ${reason} - https://rooki-bot.lemmy.world/adminlogs/${result.id} **Actions temporarily disabled**`,
+          text: `*${action}* - ${reason} - https://rooki-bot.lemmy.world/adminlogs/${result.id}  **Actions temporarily disabled**`,
         });
       }
     } catch (e) {
