@@ -181,12 +181,90 @@ apiRouter.get("/modqueue/getone/:id", async (req, res) => {
   }
 
   if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
-    res.status(401).send("User is not mod");
+    res.status(401).send("User is not mod of community");
     return;
   }
 
   res.json(entry);
 });
+
+apiRouter.get("/modquue/getonebypostid/:id", async (req, res) => {
+  const service = getModQueueService();
+  if (!service) {
+    res.status(500).send("Service not found");
+    return;
+  }
+  const user = req.personDetails;
+
+  if (!user) {
+    res.status(401).send("User not found");
+    return;
+  }
+
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send("No id given!");
+    return;
+  }
+
+  const entry = await service.getModQueueEntryByPostId(Number(id));
+
+  if (!entry) {
+    res.json({
+      found: false,
+      message: "Entry not found",
+      data: undefined
+    })
+    return;
+  }
+
+  if (!(isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
+    res.status(401).send("User is not mod of community");
+    return;
+  }
+
+  res.json({found: true, data: entry});
+})
+
+
+apiRouter.get("/modquue/comments/:id", async (req, res) => {
+  const service = getModQueueService();
+  if (!service) {
+    res.status(500).send("Service not found");
+    return;
+  }
+  const user = req.personDetails;
+
+  if (!user) {
+    res.status(401).send("User not found");
+    return;
+  }
+
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send("No id given!");
+    return;
+  }
+
+  const entry = await service.getModQueueEntryByPostId(Number(id));
+
+  if (!entry) {
+    res.json({
+      found: false,
+      message: "Entry not found",
+      data: []
+    })
+    return;
+  }
+
+  if (!(isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
+    res.status(401).send("User is not mod of community");
+    return;
+  }
+
+  res.json({found: true, data: entry.modNote || []});
+})
+
 
 apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
   try {
@@ -217,7 +295,7 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
     }
 
     if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
-      res.status(401).send("User is not mod");
+      res.status(401).send("User is not mod of community");
       return;
     }
 
@@ -263,7 +341,7 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
       return;
     }
     if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
-      res.status(401).send("User is not mod");
+      res.status(401).send("User is not mod of community");
       return;
     }
 
@@ -474,7 +552,7 @@ apiRouter.put("/modqueue/addnote", async (req, res) => {
       return;
     }
     if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
-      res.status(401).send("User is not mod");
+      res.status(401).send("User is not mod of community");
       return;
     }
     const person = await getCommunityService()?.getUser(
