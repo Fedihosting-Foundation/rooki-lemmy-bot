@@ -28,7 +28,8 @@ export type ILemmyCommand = {
 
 export type LemmyEventArguments<T> = {
   data: T;
-  config?: communityConfigModel;
+  config?: communityConfigModel | undefined;
+  oldData?: T;
 }
 
 export type LemmyCommandArguments = {

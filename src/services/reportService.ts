@@ -45,10 +45,9 @@ class reportService extends baseService<
         const data = input as CommentReportView | PostReportView;
         const config = await this.CommunityConfigService.getCommunityConfig(
           data.community.id
-        );
-        if (!config) return;
+        ) || undefined;
         try {
-          if ("comment" in data) {
+          if ("comment_report" in data) {
             const foundCommentReport = await this.commentRepository.findOne({
               where: { "comment_report.id": { $eq: data.comment_report.id } },
             });
@@ -62,6 +61,7 @@ class reportService extends baseService<
                 emitEvent("commentreportupdated", {
                   data: foundCommentReport,
                   config: config,
+                  oldData: foundCommentReport,
                 });
               }
               cb(null, foundCommentReport);
@@ -95,6 +95,7 @@ class reportService extends baseService<
                 emitEvent("postreportupdated", {
                   data: foundPostReport,
                   config: config,
+                  oldData: foundPostReport,
                 });
               }
               cb(null, result);
@@ -134,14 +135,14 @@ class reportService extends baseService<
   async fetchAndUpdate() {
     const postReports: PostReportView[] = [];
     const commentReports: CommentReportView[] = [];
-    for (let i = 1; i < 3; i++) {
+    for (let i = 0; i < 10; i++) {
       try {
         const postResult = await client.listPostReports({
           auth: getAuth(),
           page: i,
           unresolved_only: false,
         });
-        console.log("Fetched Post Reports");
+        console.log("Fetched Post Reports. Page: " + i + " of 9");
         this.push(...postResult.post_reports);
         postReports.push(...postResult.post_reports);
         await sleep(2000);
@@ -150,6 +151,7 @@ class reportService extends baseService<
           page: i,
           unresolved_only: false,
         });
+        console.log("Fetched Comment Reports. Page: " + i + " of 9");
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);
       } catch (e) {
@@ -157,7 +159,6 @@ class reportService extends baseService<
         console.log(e);
       }
       await sleep(15000);
-      console.log("Fetched Comment Reports");
     }
     return [postReports, commentReports];
   }
@@ -171,7 +172,7 @@ class reportService extends baseService<
     }
     const reports: PostReportView[] = [];
 
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 5; i++) {
       try {
         reports.push(
           ...(await client.listPostReports({ auth: getAuth() })).post_reports
@@ -179,7 +180,7 @@ class reportService extends baseService<
       } catch (e) {
         console.log(e);
       }
-      await sleep(5000);
+      await sleep(2500);
     }
     this.postReportCache = reports;
 

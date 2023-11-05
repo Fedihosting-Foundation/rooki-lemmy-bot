@@ -21,7 +21,7 @@ class ModQueueHandler {
   @LemmyOn({ event: "postcreated" })
   async handlePost(event: LemmyEventArguments<postViewModel>) {
     const modQueueSettings = event.config?.modQueueSettings;
-    if (!modQueueSettings || !modQueueSettings.enabled) return;
+    if (!modQueueSettings?.enabled) return;
 
     const post = event.data;
 
@@ -37,6 +37,15 @@ class ModQueueHandler {
     const service = getModQueueService();
     if (!service) return;
     console.log("Adding post to mod queue");
+
+    const foundEntry = await service.getModQueueEntryByPostId(post.post.id, true);
+    if (foundEntry) {
+      console.log("Found duplicate post on CREATE, Updating current entry");
+      foundEntry.entry = post;
+      await service.updateModQueueEntry(foundEntry);
+      return;
+    }
+
     await service.addModQueueEntry(post);
   }
 
@@ -50,7 +59,7 @@ class ModQueueHandler {
     const service = getModQueueService();
     if (!service) return;
 
-    const foundEntry = await service.getModQueueEntryByPostId(post.post.id);
+    const foundEntry = await service.getModQueueEntryByPostId(post.post.id, true);
     if (!foundEntry) return;
 
     foundEntry.entry = post;
@@ -68,10 +77,43 @@ class ModQueueHandler {
     const service = getModQueueService();
     if (!service) return;
 
+    const foundEntry = await service.getModQueueEntryByPostReportId(
+      report.post_report.id
+    );
+    if (foundEntry) {
+      console.log(
+        "Found duplicate post report on CREATE, Updating current entry"
+      );
+      foundEntry.entry = report;
+      await service.updateModQueueEntry(foundEntry);
+      return;
+    }
     console.log("Adding post report to mod queue");
     await service.addModQueueEntry(report);
   }
+  @LemmyOn({ event: "postreportupdated" })
+  async handlePostReportUpdate(event: LemmyEventArguments<postReportViewModel>) {
+    const modQueueSettings = event.config?.modQueueSettings;
 
+    if (!modQueueSettings || !modQueueSettings.enabled) return;
+
+    const report = event.data;
+
+    const service = getModQueueService();
+    if (!service) return;
+
+    const foundEntry = await service.getModQueueEntryByPostReportId(
+      report.post_report.id
+    );
+    if (foundEntry) {
+      console.log("Updating post report in mod queue.");
+      foundEntry.entry = report;
+      await service.updateModQueueEntry(foundEntry);
+      return;
+    }
+    console.log("Adding post report to mod queue");
+    await service.addModQueueEntry(report);
+  }
   @LemmyOn({ event: "commentreportcreated" })
   async handleCommentReport(
     event: LemmyEventArguments<commentReportViewModel>
@@ -84,7 +126,17 @@ class ModQueueHandler {
 
     const service = getModQueueService();
     if (!service) return;
-
+    const foundEntry = await service.getModQueueEntryByCommentReportId(
+      report.comment_report.id
+    );
+    if (foundEntry) {
+      console.warn(
+        "Found duplicate comment report on CREATE, Updating current entry"
+      );
+      foundEntry.entry = report;
+      await service.updateModQueueEntry(foundEntry);
+      return;
+    }
     console.log("Adding comment report to mod queue");
     await service.addModQueueEntry(report);
   }

@@ -59,6 +59,7 @@ import {
 } from "../../redux/reducers/SettingsReducer";
 import LinkIcon from "@mui/icons-material/Link";
 import { useLocation } from "react-router-dom";
+import { Chart } from "../CreatorChart/Chart";
 const filter = createFilterOptions<{
   label?: string;
   value: string;
@@ -81,6 +82,7 @@ export const PostEntry = (props: {
   const handleModalClickOpen = () => {
     setModalOpen(true);
   };
+  const [hidePicture, setHidePicture] = useState<boolean>(false)
   const markedUsers = useAppSelector(selectMarkedUsers);
   const [updateReport] = useUpdateModqueueMutation();
   const [addModNote] = useAddModMessageMutation();
@@ -176,8 +178,7 @@ export const PostEntry = (props: {
             <IconButton
               onClick={async (ev) => {
                 ev.stopPropagation();
-                const text =
-                  window.location.href + "modqueue/" + props.data.id;
+                const text = window.location.href + "modqueue/" + props.data.id;
 
                 if ("clipboard" in navigator) {
                   await navigator.clipboard.writeText(text);
@@ -328,7 +329,7 @@ export const PostEntry = (props: {
         }
       />
       <Collapse in={postExpanded} timeout="auto" unmountOnExit>
-        {props.data.entry.post.thumbnail_url ? (
+        {(props.data.entry.post.thumbnail_url || props.data.entry.post.url) && !hidePicture? (
           <Box
             sx={{
               position: "relative",
@@ -337,7 +338,11 @@ export const PostEntry = (props: {
             <Spotlight>
               <CardMedia
                 component="img"
-                image={props.data.entry.post.thumbnail_url}
+                image={props.data.entry.post.thumbnail_url || props.data.entry.post.url}
+                onError={(e) => {
+                  console.error(e)
+                  setHidePicture(true)
+                }}
                 alt="Thumbnail Url"
               />
             </Spotlight>
@@ -346,15 +351,18 @@ export const PostEntry = (props: {
           <></>
         )}
         <Box sx={{ pl: "25px", pt: "10px" }}>
-          {props.data.entry.post.url ? (
+          {props.data.entry.post.thumbnail_url || props.data.entry.post.url ? (
             <>
               <Button
                 sx={{ mb: 1 }}
                 onClick={() => {
-                  window.open(props.data.entry.post.url, "_blank");
+                  window.open(
+                    props.data.entry.post.thumbnail_url || props.data.entry.post.url,
+                    "_blank"
+                  );
                 }}
               >
-                URL: {props.data.entry.post.url}
+                URL: {props.data.entry.post.thumbnail_url || props.data.entry.post.url}
               </Button>
               <Divider />
             </>
@@ -547,6 +555,16 @@ export const PostEntry = (props: {
             ) : (
               <>Loading...</>
             )}
+            <Box
+              sx={{
+                height: "500px",
+                width: "100%",
+                backgroundColor: "grey",
+              }}
+            >
+              <Chart data={{ person: props.data.entry.creator }} />
+              {/* <D3Chart person={props.data.entry.creator} /> */}
+            </Box>
           </CardContent>
         </Collapse>
       </Collapse>

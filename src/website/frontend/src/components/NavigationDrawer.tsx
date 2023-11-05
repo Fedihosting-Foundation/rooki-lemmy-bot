@@ -14,12 +14,12 @@ import { Outlet, useNavigate } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import BuildIcon from "@mui/icons-material/Build";
 import MenuIcon from "@mui/icons-material/Menu";
-import { logoutUser } from "../redux/reducers/AuthenticationReducer";
-import { useAppDispatch } from "../redux/hooks";
-
+import { logoutUser, selectUser } from "../redux/reducers/AuthenticationReducer";
+import { useAppDispatch, useAppSelector } from "../redux/hooks";
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 const NavigationDrawer = (props: any) => {
   const dispatch = useAppDispatch();
-
+  const currentUser = useAppSelector(selectUser);
   const [state, setState] = useState<boolean>(false);
   const toggleDrawer = (state: boolean) => {
     setState(state);
@@ -40,6 +40,13 @@ const NavigationDrawer = (props: any) => {
     },
   ];
 
+  if (currentUser?.person_view.person.admin) {
+    options.splice(1, 0,{
+      name: "Admin Logs",
+      icon: <AdminPanelSettingsIcon />,
+      path: "/adminlogs",
+    });
+  }
   return (
     <>
       <Drawer anchor={"left"} open={state} onClose={() => toggleDrawer(false)}>

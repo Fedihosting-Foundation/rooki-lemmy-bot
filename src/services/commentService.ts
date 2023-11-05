@@ -31,8 +31,7 @@ class commentService extends baseService<
       try {
         const config = await this.CommunityConfigService.getCommunityConfig(
           comment.community.id
-        );
-        if (!config) return;
+        ) || undefined;
         const foundComment = await this.repository.findOne({
           where: { "comment.id": { $eq: comment.comment.id } },
         });
@@ -40,9 +39,9 @@ class commentService extends baseService<
           const updatedComment = { ...foundComment, ...comment };
           const result = await this.repository.save(updatedComment);
           if (comment.comment.deleted !== foundComment.comment.deleted) {
-            emitEvent("commentdeleted", { data: result, config: config });
+            emitEvent("commentdeleted", { data: result, config: config, oldData: foundComment });
           } else if (comment.comment.updated !== foundComment.comment.updated) {
-            emitEvent("commentupdated", { data: result, config: config });
+            emitEvent("commentupdated", { data: result, config: config, oldData: foundComment });
           }
           cb(null, result);
           return;

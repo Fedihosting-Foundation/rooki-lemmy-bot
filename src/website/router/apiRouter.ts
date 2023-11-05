@@ -2,7 +2,6 @@ import express from "express";
 import modQueueService from "../../services/modQueueService";
 import { typeDiDependencyRegistryEngine } from "discordx";
 import {
-  isModOfCommunityPerson,
   isModOfCommunityPersonResponse,
 } from "../../helpers/lemmyHelper";
 import CommunityService from "../../services/communityService";
@@ -20,6 +19,8 @@ import communityConfigRouter from "./communityConfigApiRouter";
 import utilRouter from "./utilRouter";
 import { CommentReportView, Community, PostReportView } from "lemmy-js-client";
 import { asyncFilter } from "../../utils/AsyncFilter";
+import adminApiRouter from "./adminRouter";
+import siteConfigApiRouter from "./siteConfigApiRouter";
 
 let modService: modQueueService | undefined;
 
@@ -82,7 +83,8 @@ apiRouter.use(authMiddleware);
 
 apiRouter.use("/utils", utilRouter);
 apiRouter.use("/config", communityConfigRouter);
-
+apiRouter.use("/adminLogs", adminApiRouter);
+apiRouter.use("/admin", siteConfigApiRouter)
 apiRouter.post("/modqueue", async (req, res) => {
   const service = getModQueueService();
   if (!service) {
@@ -96,8 +98,11 @@ apiRouter.post("/modqueue", async (req, res) => {
     return;
   }
 
-  const body = req.body as { id: string | undefined; communities: number[], amount?: number };
-  console.log(body);
+  const body = req.body as {
+    id: string | undefined;
+    communities: number[];
+    amount?: number;
+  };
   const entries = await service.getModQueueEntriesAfterId(
     body.id,
     body.communities.length > 0
@@ -109,7 +114,7 @@ apiRouter.post("/modqueue", async (req, res) => {
       : user.local_user_view.person.admin
       ? false
       : user.moderates.map((x) => x.community.id),
-      body.amount ? body.amount : 20
+    body.amount ? body.amount : 20
   );
   res.json(entries);
 });
@@ -173,13 +178,92 @@ apiRouter.get("/modqueue/getone/:id", async (req, res) => {
     return;
   }
 
-  if (!(isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
-    res.status(401).send("User is not mod");
+  if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
+    res.status(401).send("User is not mod of community");
     return;
   }
 
   res.json(entry);
 });
+
+apiRouter.get("/modquue/getonebypostid/:id", async (req, res) => {
+  const service = getModQueueService();
+  if (!service) {
+    res.status(500).send("Service not found");
+    return;
+  }
+  const user = req.personDetails;
+
+  if (!user) {
+    res.status(401).send("User not found");
+    return;
+  }
+
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send("No id given!");
+    return;
+  }
+
+  const entry = await service.getModQueueEntryByPostId(Number(id));
+
+  if (!entry) {
+    res.json({
+      found: false,
+      message: "Entry not found",
+      data: undefined
+    })
+    return;
+  }
+
+  if (!(isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
+    res.status(401).send("User is not mod of community");
+    return;
+  }
+
+  res.json({found: true, data: entry});
+})
+
+
+apiRouter.get("/modquue/comments/:id", async (req, res) => {
+  const service = getModQueueService();
+  if (!service) {
+    res.status(500).send("Service not found");
+    return;
+  }
+  const user = req.personDetails;
+
+  if (!user) {
+    res.status(401).send("User not found");
+    return;
+  }
+
+  const id = req.params.id;
+  if (!id) {
+    res.status(400).send("No id given!");
+    return;
+  }
+
+  const entry = await service.getModQueueEntryByPostId(Number(id));
+
+  if (!entry) {
+    res.json({
+      found: false,
+      message: "Entry not found",
+      data: []
+    })
+    return;
+  }
+
+  if (!(isModOfCommunityPersonResponse(user, entry.entry.community.id))) {
+    res.status(401).send("User is not mod of community");
+    return;
+  }
+
+  res.json({found: true, data: entry.modNote || []});
+})
+
+
 apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -208,10 +292,8 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
       return;
     }
 
-    if (
-      !(await isModOfCommunityPersonResponse(user, entry.entry.community.id))
-    ) {
-      res.status(401).send("User is not mod");
+    if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
+      res.status(401).send("User is not mod of community");
       return;
     }
 
@@ -232,6 +314,7 @@ apiRouter.get("/modqueue/refresh/:id", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
 apiRouter.put("/modqueue/resolve", async (req, res) => {
   const service = getModQueueService();
   if (!service) {
@@ -256,7 +339,7 @@ apiRouter.put("/modqueue/resolve", async (req, res) => {
       return;
     }
     if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
-      res.status(401).send("User is not mod");
+      res.status(401).send("User is not mod of community");
       return;
     }
 
@@ -467,7 +550,7 @@ apiRouter.put("/modqueue/addnote", async (req, res) => {
       return;
     }
     if (!isModOfCommunityPersonResponse(user, entry.entry.community.id)) {
-      res.status(401).send("User is not mod");
+      res.status(401).send("User is not mod of community");
       return;
     }
     const person = await getCommunityService()?.getUser(

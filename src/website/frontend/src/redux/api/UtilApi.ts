@@ -15,15 +15,6 @@ const utilApi = createApi({
   }),
   refetchOnReconnect: true,
   endpoints: (builder) => ({
-    getPerson: builder.query<GetPersonDetailsResponse, { userId: number }>({
-      query: (user) => ({
-        url: `/person`,
-        method: "POST",
-        body: {
-          userId: user.userId,
-        },
-      }),
-    }),
     isBotModeratorOfCommunity: builder.query<
       { isMod: boolean },
       { communityId: number }
@@ -39,5 +30,5 @@ const utilApi = createApi({
   }),
 });
 
-export const { useGetPersonQuery, useLazyIsBotModeratorOfCommunityQuery } = utilApi;
+export const { useLazyIsBotModeratorOfCommunityQuery } = utilApi;
 export default utilApi;

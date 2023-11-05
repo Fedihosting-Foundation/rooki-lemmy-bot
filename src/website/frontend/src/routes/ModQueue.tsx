@@ -1,4 +1,14 @@
-import { Alert, AlertColor, Box, Button, Collapse, FormControlLabel, Portal, Snackbar, Switch } from "@mui/material";
+import {
+  Alert,
+  AlertColor,
+  Box,
+  Button,
+  Collapse,
+  FormControlLabel,
+  Portal,
+  Snackbar,
+  Switch,
+} from "@mui/material";
 import {
   useGetModqueueEntryQuery,
   useLazyFetchCommunitiesQuery,
@@ -34,11 +44,14 @@ export const ModQueue = () => {
   const params = useParams();
   const isSingleView = "id" in params;
   const [wasSingleView, setWasSingleView] = useState<boolean>(isSingleView);
-  const { data: SingleViewData, refetch, isError: singleError } = useGetModqueueEntryQuery(
-    params.id!,
-    { skip: !isSingleView }
-  );
-    const [alert, setAlert] = useState<{state: AlertColor, text: string} | undefined>(undefined);
+  const {
+    data: SingleViewData,
+    refetch,
+    isError: singleError,
+  } = useGetModqueueEntryQuery(params.id!, { skip: !isSingleView });
+  const [alert, setAlert] = useState<
+    { state: AlertColor; text: string } | undefined
+  >(undefined);
   const [fetchCommunities, { data: communityData, isError: manyError }] =
     useLazyFetchCommunitiesQuery({ pollingInterval: 2 * 60 * 1000 });
 
@@ -50,7 +63,7 @@ export const ModQueue = () => {
     localStorage.getItem("showOnlyOpenTasks") === "true"
   );
 
-    const hasError = useCallback(() => {
+  const hasError = useCallback(() => {
     return isError || singleError || manyError;
   }, [isError, singleError, manyError]);
 
@@ -74,6 +87,7 @@ export const ModQueue = () => {
     ) {
       setOldH(e.target.scrollHeight);
       nextScroll = Date.now() + 5000;
+      if(modQueue[modQueue.length - 1] === undefined) return;
       fetchMore({
         id: modQueue[modQueue.length - 1].id,
         communities: filter.map((x) => x.community.id),
@@ -170,18 +184,26 @@ export const ModQueue = () => {
 
         return x;
       });
-      setModQueue([...data, ...temp].filter((x) => x !== undefined));
+      const mData = [...data, ...temp].filter((x) => x !== undefined);
+      setModQueue(mData);
     } else if (!modQueueData) {
       fetchMore({
         id: undefined,
         communities: filter.map((x) => x.community.id),
       });
     }
-  }, [modQueueData, isSingleView, SingleViewData, wasSingleView]);
+  }, [
+    modQueueData,
+    isSingleView,
+    SingleViewData,
+    wasSingleView,
+    fetchMore,
+    filter,
+  ]);
 
   useEffect(() => {
-    if(hasError()) setAlert({state: "error", text: "Something went wrong!"})
-  }, [hasError])
+    if (hasError()) setAlert({ state: "error", text: "Something went wrong!" });
+  }, [hasError]);
 
   return (
     <Box
@@ -235,8 +257,7 @@ export const ModQueue = () => {
       ) : (
         <></>
       )}
-      {modData.length !== (modQueue?.length || modData.length) &&
-      !isSingleView ? (
+      {!isSingleView ? (
         <Box
           sx={{
             width: "100%",
@@ -250,7 +271,7 @@ export const ModQueue = () => {
               mb: "10px",
             }}
             onClick={() => {
-              modQueue &&
+              modQueue && modQueue.length > 0 &&
                 fetchMore({
                   id: modQueue[modQueue.length - 1].id,
                   communities: filter.map((x) => x.community.id),
@@ -365,7 +386,7 @@ export const ModQueue = () => {
         </Box>
       )}
       <Portal>
-      <Snackbar
+        <Snackbar
           open={alert !== undefined}
           autoHideDuration={6000}
           onClose={() => setAlert(undefined)}
