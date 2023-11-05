@@ -1,7 +1,6 @@
 import { LemmyOn } from "../decorators/lemmyPost";
 import postViewModel from "../models/postViewModel";
 import { LemmyEventArguments } from "../types/LemmyEvents";
-import client, { getAuth } from "../main";
 import { typeDiDependencyRegistryEngine } from "discordx";
 import adminLogService from "../services/adminLogService";
 import analysePicture from "../utils/DetectNSFW";
@@ -9,6 +8,9 @@ import CommunityService from "../services/communityService";
 import { AdminQueueEntryResult } from "../models/adminLogModel";
 import BetterQueue from "better-queue";
 import { PostView } from "lemmy-js-client";
+import siteConfigService from "../services/siteConfigService";
+import SiteConfigModel from "../models/siteConfigModel";
+import client, { getAuth } from "../main";
 
 let adminLogServ: adminLogService | undefined;
 
@@ -27,6 +29,37 @@ function getCommunityService() {
       typeDiDependencyRegistryEngine.getService(CommunityService) || undefined;
   }
   return communityServ;
+}
+let siteConfigServ: siteConfigService | undefined;
+
+function getSiteConfigService() {
+  if (!siteConfigServ) {
+    siteConfigServ =
+      typeDiDependencyRegistryEngine.getService(siteConfigService) || undefined;
+  }
+  return siteConfigServ;
+}
+
+async function isNSFW(predictions: { className: string; probability: number }[], config: SiteConfigModel) {
+
+  if (!config || !config.nsfwFilter.enabled) return {
+    nsfw: false,
+    warn: false
+  };
+
+  const hentai = predictions.find((x) => x.className === "Hentai")!;
+  const porn = predictions.find((x) => x.className === "Porn")!;
+  return {
+    nsfw: (
+      hentai.probability > config.nsfwFilter.thresholds.hentai ||
+      porn.probability > config.nsfwFilter.thresholds.porn ||
+      porn.probability + hentai.probability > config.nsfwFilter.thresholds.combined),
+    warn: (
+      hentai.probability > (config.nsfwFilter.thresholds.hentaiWarning || 1) ||
+      porn.probability > (config.nsfwFilter.thresholds.pornWarning || 1) ||
+      hentai.probability + porn.probability > (config.nsfwFilter.thresholds.combinedWarning || 1)
+    )
+  }
 }
 
 const handleProcess = async (
@@ -58,45 +91,53 @@ const handleProcess = async (
       }
       console.log(data.url);
       console.log(predictions);
-
-      const hentai = predictions.find((x) => x.className === "Hentai");
-      const porn = predictions.find((x) => x.className === "Porn");
+      const service = getSiteConfigService();
+      if (!service) return {
+        nsfw: false,
+        warn: false
+      };
+      const config = await service.getConfig();
+      if (!config) {
+        console.log("No config found");
+        cb(undefined, undefined);
+        return;
+      }
+      const predData = await isNSFW(predictions, config);
+      const isNsfw = predData.nsfw;
+      const isWarn = predData.warn;
       console.log(
         "Is tooo sexy: " +
-          (hentai.probability > 0.95 ||
-            porn.probability > 0.95 ||
-            porn.probability + hentai.probability > 0.9)
+        isNsfw
       );
 
       if (
-        hentai.probability > 0.95 ||
-        porn.probability > 0.95 ||
-        porn.probability + hentai.probability > 0.9
+        isNsfw && config.nsfwFilter.enabled
       ) {
         try {
-          // await client.removePost({
-          //   auth: getAuth(),
-          //   post_id: data.post.post.id,
-          //   removed: true,
-          //   reason: "NSFW in not NSFW community!",
-          // });
+          await client.removePost({
+            auth: getAuth(),
+            post_id: data.post.post.id,
+            removed: true,
+            reason: "NSFW in not NSFW community!",
+          });
         } catch (e) {
           console.log(e);
           console.log("Not an admin / mod");
         }
         if (
+          config.nsfwFilter.banAgeHours > 0 &&
           Date.now() - new Date(data.post.creator.published).getTime() <
-          1000 * 60 * 60
+          (1000 * 60 * 60) * config.nsfwFilter.banAgeHours
         ) {
           console.log("NSFW AND YOUNG ACCOUNT BANNING", data.post.creator);
           try {
-            // await client.banPerson({
-            //   auth: getAuth(),
-            //   ban: true,
-            //   person_id: data.post.creator.id,
-            //   reason: "NSFW in not NSFW community!",
-            //   remove_data: true,
-            // });
+            await client.banPerson({
+              auth: getAuth(),
+              ban: true,
+              person_id: data.post.creator.id,
+              reason: "NSFW in not NSFW community!",
+              remove_data: true,
+            });
           } catch (e) {
             console.log(e);
             console.log("Not an admin");
@@ -115,17 +156,15 @@ const handleProcess = async (
             predictions
           );
         }
-      }else{
-        if(     hentai.probability > 0.75 ||
-          porn.probability > 0.75 ||
-          porn.probability + hentai.probability > 0.75)
+      } else if (isWarn) {
         await data.service.addAdminLogEntry(
           data.post,
           AdminQueueEntryResult.Nothing,
-          "NSFW in not NSFW community BUT not too nsfw!",
+          "NSFW - Warning",
           predictions
         );
       }
+
     } else {
       console.log("No URL????");
     }

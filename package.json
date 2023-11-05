@@ -5,8 +5,8 @@
   "license": "MIT",
   "main": "build/main.js",
   "scripts": {
-    "dev": "node --max-http-header-size 15000 -r ts-node/register src/main.ts",
-    "build": "del-cli build && tsc & cd src/website/frontend && npm install && npm run build && del-cli ../../../build/website/frontend -f && move-cli ./build ../../../build/website/frontend -md && cd ../../..",
+    "dev": "export DEVELOPER=Rooki && node --max-http-header-size 15000 -r ts-node/register src/main.ts",
+    "build": "del-cli build && node -v && tsc & cd src/website/frontend && npm install && npm run build && del-cli ../../../build/website/frontend -f && move-cli ./build ../../../build/website/frontend -md && cd ../../..",
     "start": "node build/main.js",
     "watch": "nodemon --exec ts-node src/main.ts"
   },

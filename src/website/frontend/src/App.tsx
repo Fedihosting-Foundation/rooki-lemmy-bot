@@ -9,6 +9,7 @@ import { CircularProgress, Typography } from "@mui/material";
 import { CommunityConfig } from "./routes/CommunityConfig";
 import NavigationDrawer from "./components/NavigationDrawer";
 import { AdminLogs } from "./routes/AdminLogs";
+import { isAdmin } from "./util/utils";
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -57,7 +58,7 @@ function App() {
             <Route path="/config" element={<CommunityConfig />} />
             <Route path="/modqueue/:id" element={<ModQueue />} />
 
-            {currentUser.person_view.person.admin || currentUser.person_view.person.name === "Rooki" ? (
+            {isAdmin(currentUser.person_view.person) ? (
               <Route path="/adminlogs/:id?" element={<AdminLogs />} />
             ) : (
               <Route

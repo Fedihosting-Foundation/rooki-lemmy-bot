@@ -19,6 +19,7 @@ import utilApi from "./api/UtilApi";
 import modConfigApi from "./api/ModConfigApi";
 import CommunitySettingsReducer from "./reducers/CommunitySettingsReducer";
 import adminLogsAPI from "./api/AdminLogsAPI";
+import siteConfigAPI from "./api/SiteConfigAPI";
 
 export const store = configureStore({
   reducer: {
@@ -30,6 +31,7 @@ export const store = configureStore({
     [utilApi.reducerPath]: utilApi.reducer,
     [modConfigApi.reducerPath]: modConfigApi.reducer,
     [adminLogsAPI.reducerPath]: adminLogsAPI.reducer,
+    [siteConfigAPI.reducerPath]: siteConfigAPI.reducer,
   },
   middleware: (getDefaultMiddleware) => 
    getDefaultMiddleware({
@@ -42,7 +44,8 @@ export const store = configureStore({
       .concat(modQueueApi.middleware)
       .concat(utilApi.middleware)
       .concat(modConfigApi.middleware)
-      .concat(adminLogsAPI.middleware),
+      .concat(adminLogsAPI.middleware)
+      .concat(siteConfigAPI.middleware),
 });
 
 setupListeners(store.dispatch);

@@ -19,6 +19,6 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["build", "node_modules", "src/website/frontend/**"],
+  "exclude": ["build", "node_modules", "src/website/frontend/**/*"],
   "files": ["src/types/Express-Request.d.ts"]
 }

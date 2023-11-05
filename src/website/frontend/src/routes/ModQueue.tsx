@@ -87,6 +87,7 @@ export const ModQueue = () => {
     ) {
       setOldH(e.target.scrollHeight);
       nextScroll = Date.now() + 5000;
+      if(modQueue[modQueue.length - 1] === undefined) return;
       fetchMore({
         id: modQueue[modQueue.length - 1].id,
         communities: filter.map((x) => x.community.id),
@@ -270,7 +271,7 @@ export const ModQueue = () => {
               mb: "10px",
             }}
             onClick={() => {
-              modQueue &&
+              modQueue && modQueue.length > 0 &&
                 fetchMore({
                   id: modQueue[modQueue.length - 1].id,
                   communities: filter.map((x) => x.community.id),

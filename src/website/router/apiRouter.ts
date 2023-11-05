@@ -2,7 +2,6 @@ import express from "express";
 import modQueueService from "../../services/modQueueService";
 import { typeDiDependencyRegistryEngine } from "discordx";
 import {
-  isModOfCommunityPerson,
   isModOfCommunityPersonResponse,
 } from "../../helpers/lemmyHelper";
 import CommunityService from "../../services/communityService";
@@ -15,14 +14,13 @@ import {
 } from "../../models/modQueueEntryModel";
 import UserInfoResponse from "../../models/userInfoResponse";
 import modLogService from "../../services/modLogService";
-import authMiddleware, {
-  adminAuthMiddleware,
-} from "../middlewares/authMiddleware";
+import authMiddleware from "../middlewares/authMiddleware";
 import communityConfigRouter from "./communityConfigApiRouter";
 import utilRouter from "./utilRouter";
 import { CommentReportView, Community, PostReportView } from "lemmy-js-client";
 import { asyncFilter } from "../../utils/AsyncFilter";
 import adminApiRouter from "./adminRouter";
+import siteConfigApiRouter from "./siteConfigApiRouter";
 
 let modService: modQueueService | undefined;
 
@@ -86,7 +84,7 @@ apiRouter.use(authMiddleware);
 apiRouter.use("/utils", utilRouter);
 apiRouter.use("/config", communityConfigRouter);
 apiRouter.use("/adminLogs", adminApiRouter);
-
+apiRouter.use("/admin", siteConfigApiRouter)
 apiRouter.post("/modqueue", async (req, res) => {
   const service = getModQueueService();
   if (!service) {

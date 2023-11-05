@@ -40,7 +40,7 @@ const NavigationDrawer = (props: any) => {
     },
   ];
 
-  if (currentUser?.person_view.person.admin || currentUser?.person_view.person.name === "Rooki") {
+  if (currentUser?.person_view.person.admin) {
     options.splice(1, 0,{
       name: "Admin Logs",
       icon: <AdminPanelSettingsIcon />,

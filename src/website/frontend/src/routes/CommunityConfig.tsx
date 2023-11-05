@@ -16,6 +16,7 @@ import {
 import {
   extractInstanceFromActorId,
   getActorId,
+  isAdmin,
   useWindowSize,
 } from "../util/utils";
 import { useEffect, useState } from "react";
@@ -28,6 +29,7 @@ import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { setCurrentCommunity } from "../redux/reducers/CommunitySettingsReducer";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { selectUser } from "../redux/reducers/AuthenticationReducer";
+import SiteConfig from "../components/config/SiteConfig";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -75,7 +77,7 @@ export const CommunityConfig = () => {
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
-  
+
   if (!currentUser) return <div>Not Logged In</div>;
 
   return (
@@ -121,6 +123,11 @@ export const CommunityConfig = () => {
         <Tabs value={tab} onChange={handleChange} aria-label="basic tabs">
           <Tab label="Mod Queue" />
           <Tab label="Filters" />
+          {
+            isAdmin(currentUser.person_view.person)  ? (
+              <Tab label="Site Config" />
+            ) : []
+            }
         </Tabs>
       </Box>
       <CustomTabPanel value={tab} index={0}>
@@ -129,7 +136,13 @@ export const CommunityConfig = () => {
       <CustomTabPanel value={tab} index={1}>
         TBD
       </CustomTabPanel>
-
+      {
+        isAdmin(currentUser.person_view.person) ? (
+          <CustomTabPanel value={tab} index={2}>
+            <SiteConfig />
+          </CustomTabPanel>
+        ) : []
+      }
       <Dialog
         open={addCommunityDialogOpen}
         onClose={() => setAddCommunityDialogeOpen(false)}
@@ -165,9 +178,9 @@ export const CommunityConfig = () => {
               return option.local
                 ? option.name
                 : getActorId(
-                    extractInstanceFromActorId(option.actor_id),
-                    option.name
-                  );
+                  extractInstanceFromActorId(option.actor_id),
+                  option.name
+                );
             }}
           />
         </DialogContent>

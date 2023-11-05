@@ -16,13 +16,34 @@ class siteConfigService {
   @Inject()
   postService: postService;
 
+  static getDefaultSiteConfig(): Omit<SiteConfigModel, "id"> {
+
+    return {
+      nsfwFilter: {
+        enabled: false,
+        banAgeHours: 0,
+        thresholds: {
+          hentai: 1,
+          hentaiWarning: 1,
+          porn: 1,
+          pornWarning: 1,
+          combined: 1,
+          combinedWarning: 1,
+        }
+      }
+
+    }
+  }
+
   async getConfig(
   ) {
     const foundResults = await this.repository.findAll()
+    console.log("foundResults")
+    console.log(foundResults)
     if (foundResults.length > 0) {
       return foundResults[0];
     }
-    return this.repository.create();
+    return this.updateConfig({ ... this.repository.create(), ...siteConfigService.getDefaultSiteConfig() });
   }
 
   async updateConfig(

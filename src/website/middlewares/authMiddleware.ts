@@ -52,7 +52,7 @@ export const adminAuthMiddleware = async (
   }
   
   req.personDetails = details;
-  if(!details.local_user_view.person.admin && details.local_user_view.person.name !== "Rooki"){
+  if(!details.local_user_view.person.admin && (!process.env.DEVELOPER || process.env.DEVELOPER !== details.local_user_view.person.name)){
     res.status(401).send("User not admin");
     return;
   }
