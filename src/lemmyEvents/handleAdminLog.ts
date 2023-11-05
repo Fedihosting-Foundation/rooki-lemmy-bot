@@ -41,7 +41,6 @@ function getSiteConfigService() {
 }
 
 async function isNSFW(predictions: { className: string; probability: number }[], config: SiteConfigModel) {
-
   if (!config || !config.nsfwFilter.enabled) return {
     nsfw: false,
     warn: false
