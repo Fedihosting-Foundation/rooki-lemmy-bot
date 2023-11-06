@@ -57,6 +57,17 @@ class manageService {
         console.log(x);
       }
     }, config.fetchInterval.reports);
+
+    setIntervalAsync(async () => {
+      console.log("Resolving Reports");
+      try{
+        await this.reportService.resolveRemovedReports();
+      } catch (x) {
+        console.log("Resolve reports Error");
+        console.log(x);
+      }
+    }, config.fetchInterval.resolve_reports);
+
     this.reportService.start();
     this.mentionService.start();
     this.commentService.start();

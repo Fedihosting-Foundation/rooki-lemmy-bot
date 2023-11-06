@@ -124,12 +124,44 @@ class reportService extends baseService<
     );
     setInterval(async () => {
       try {
-        await this.getCommentReports(true);
-        await this.getPostReports(true);
+        await this.getReports(true);
       } catch (e) {
         console.log(e);
       }
-    }, 1000 * 60 * 15);
+    }, 1000 * 60 * 5);
+  }
+
+  async resolveRemovedReports() {
+    const reports = await this.getReports(true);
+
+    for (const report of reports) {
+      if ("post_report" in report) {
+        if (report.post.removed) {
+          try {
+            await client.resolvePostReport({
+              auth: getAuth(),
+              report_id: report.post_report.id,
+              resolved: true,
+            });
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      } else {
+        if (report.comment.removed) {
+          try {
+            await client.resolveCommentReport({
+              auth: getAuth(),
+              report_id: report.comment_report.id,
+              resolved: true,
+            });
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      }
+
+    }
   }
 
   async fetchAndUpdate() {
@@ -145,7 +177,6 @@ class reportService extends baseService<
         console.log("Fetched Post Reports. Page: " + i + " of 9");
         this.push(...postResult.post_reports);
         postReports.push(...postResult.post_reports);
-        await sleep(2000);
         const commentResult = await client.listCommentReports({
           auth: getAuth(),
           page: i,
@@ -154,13 +185,13 @@ class reportService extends baseService<
         console.log("Fetched Comment Reports. Page: " + i + " of 9");
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);
-      } catch (e) {
-        console.log("Report Fetch Error");
-        console.log(e);
-      }
-      await sleep(15000);
+     
+    } catch (e) {
+      console.log(e);
     }
-    return [postReports, commentReports];
+    await sleep(5000);
+  }
+    return [...postReports, ...commentReports];
   }
 
   async getPostReports(force: boolean = false) {
@@ -172,7 +203,7 @@ class reportService extends baseService<
     }
     const reports: PostReportView[] = [];
 
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       try {
         reports.push(
           ...(await client.listPostReports({ auth: getAuth() })).post_reports
@@ -194,22 +225,25 @@ class reportService extends baseService<
         return cachedReports;
       }
     }
-    const reports: CommentReportView[] = [];
+    const reports: (CommentReportView | PostReportView)[] = [];
 
-    for (let i = 1; i <= 3; i++) {
+    for (let i = 1; i <= 10; i++) {
       try {
         reports.push(
           ...(await client.listCommentReports({ auth: getAuth() }))
-            .comment_reports
+            .comment_reports,
         );
       } catch (e) {
         console.log(e);
       }
-      await sleep(5000);
+      await sleep(2500);
     }
-    this.commentReportCache = reports;
 
     return this.commentReportCache;
+  }
+
+  async getReports(force: boolean = false) {
+    return [... await this.getCommentReports(force), ... await this.getPostReports(force)];
   }
 
   async getPostReport(reportId: number) {

@@ -42,7 +42,7 @@ export type CommunityTimedConfig = {
   interval: string;
 };
 
-export type FetchIntervals = "posts" | "comments" | "reports" | "mentions";
+export type FetchIntervals = "posts" | "comments" | "reports" | "resolve_reports" | "mentions";
 
 export default interface IConfig {
   /***

@@ -5,6 +5,7 @@ export const config: IConfig = {
     posts: 1000 * 30,
     comments: 1000 * 60,
     reports: 1000 * 60,
+    resolve_reports: 1000 * 15,
     mentions: 1000 * 45,
   },
   lemmyInstance: "https://lemmy.world",
