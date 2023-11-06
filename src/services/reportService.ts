@@ -128,7 +128,7 @@ class reportService extends baseService<
       } catch (e) {
         console.log(e);
       }
-    }, 1000 * 60 * 15);
+    }, 1000 * 60 * 5);
   }
 
   async resolveRemovedReports() {
@@ -167,14 +167,14 @@ class reportService extends baseService<
   async fetchAndUpdate() {
     const postReports: PostReportView[] = [];
     const commentReports: CommentReportView[] = [];
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 10; i++) {
       try {
         const postResult = await client.listPostReports({
           auth: getAuth(),
           page: i,
           unresolved_only: false,
         });
-        console.log("Fetched Post Reports. Page: " + i + " of 39");
+        console.log("Fetched Post Reports. Page: " + i + " of 9");
         this.push(...postResult.post_reports);
         postReports.push(...postResult.post_reports);
         const commentResult = await client.listCommentReports({
@@ -182,14 +182,14 @@ class reportService extends baseService<
           page: i,
           unresolved_only: false,
         });
-        console.log("Fetched Comment Reports. Page: " + i + " of 39");
+        console.log("Fetched Comment Reports. Page: " + i + " of 9");
         this.push(...commentResult.comment_reports);
         commentReports.push(...commentResult.comment_reports);
      
     } catch (e) {
       console.log(e);
     }
-    await sleep(1000);
+    await sleep(5000);
   }
     return [...postReports, ...commentReports];
   }
@@ -203,7 +203,7 @@ class reportService extends baseService<
     }
     const reports: PostReportView[] = [];
 
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       try {
         reports.push(
           ...(await client.listPostReports({ auth: getAuth() })).post_reports
@@ -227,7 +227,7 @@ class reportService extends baseService<
     }
     const reports: (CommentReportView | PostReportView)[] = [];
 
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 10; i++) {
       try {
         reports.push(
           ...(await client.listCommentReports({ auth: getAuth() }))

@@ -65,7 +65,7 @@ class commentService extends baseService<
     const comments: CommentView[] = [];
     try {
       const communities = await this.CommunityConfigService.getCommunityConfigs();
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 10; i++) {
         const result = {
           comments: (
             await client.getComments({
@@ -81,7 +81,7 @@ class commentService extends baseService<
         };
         this.push(...result.comments);
         comments.push(...result.comments);
-      await sleep(15000);
+        await sleep(5000);
       }
     } catch (e) {
       console.log("Comment Fetch Error");

@@ -82,7 +82,7 @@ class postService extends baseService<PostView, postViewModel> {
     );
     setInterval(() => {
       this.postCache = {};
-    }, 1000 * 60 * 15);
+    }, 1000 * 60 * 5);
   }
 
   async fetchAndUpdate() {
