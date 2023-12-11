@@ -6,7 +6,7 @@ import client, { getAuth } from "../main";
 import userInfoRepository from "../repository/userInfoRepository";
 
 @Service()
-class modLogService {
+class userInfoService {
   @Inject()
   repository: userInfoRepository;
 
@@ -42,4 +42,4 @@ class modLogService {
   }
 }
 
-export default modLogService;
+export default userInfoService;

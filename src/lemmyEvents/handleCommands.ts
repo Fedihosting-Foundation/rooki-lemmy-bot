@@ -1,5 +1,5 @@
 import { typeDiDependencyRegistryEngine } from "discordx";
-import { LemmyOn, getCommand } from "../decorators/lemmyPost";
+import { Lemmy, LemmyOn, getCommand } from "../decorators/lemmyPost";
 import { isModOfCommunityPerson } from "../helpers/lemmyHelper";
 import client from "../main";
 import personMentionViewModel from "../models/personMentionViewModel";

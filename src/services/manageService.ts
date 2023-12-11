@@ -6,6 +6,7 @@ import "reflect-metadata";
 import mentionService from "./mentionService";
 import reportService from "./reportService";
 import { setIntervalAsync } from "set-interval-async";
+import modLogService from "./modLogService";
 @Service()
 class manageService {
   @Inject()
@@ -16,6 +17,8 @@ class manageService {
   mentionService: mentionService;
   @Inject()
   reportService: reportService;
+  @Inject()
+  modlogService: modLogService;
 
   startTimers() {
     console.log("Starting timers");
@@ -60,7 +63,7 @@ class manageService {
 
     setIntervalAsync(async () => {
       console.log("Resolving Reports");
-      try{
+      try {
         await this.reportService.resolveRemovedReports();
       } catch (x) {
         console.log("Resolve reports Error");
@@ -68,10 +71,20 @@ class manageService {
       }
     }, config.fetchInterval.resolve_reports);
 
+    setIntervalAsync(async () => {
+      console.log("Checking Mod Logs");
+      try {
+        await this.modlogService.fetchAndUpdate();
+      } catch (x) {
+        console.log("Mod log Error");
+        console.log(x);
+      }
+    }, 60000)
     this.reportService.start();
     this.mentionService.start();
     this.commentService.start();
     this.postService.start();
+    this.modlogService.start();
   }
 }
 export default manageService;

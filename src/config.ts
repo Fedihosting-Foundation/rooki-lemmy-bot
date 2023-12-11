@@ -19,6 +19,8 @@ export const config: IConfig = {
       url: "https://a.lemmy.world",
     },
   },
+  
+  firstRun: false,
 };
 
 // communityConfig: [

@@ -12,7 +12,6 @@ import timedPostService from "./services/timedPostService";
 import { startServer } from "./website";
 import config from "./config";
 import modQueueService from "./services/modQueueService";
-import analysePicture from "./utils/DetectNSFW";
 DIService.engine = typeDiDependencyRegistryEngine
   .setService(Service)
   .setInjector(Container);
@@ -22,7 +21,7 @@ process.on("uncaughtException", (error) => {
   console.log(error);
 
   setTimeout(() => {
-    process.exit(1);
+  //  process.exit(1);
   }, 5000);
 });
 
@@ -108,14 +107,6 @@ async function start() {
   const timedPost = typeDiDependencyRegistryEngine.getService(timedPostService)!;
   management.startTimers();
   startServer()
-
-  analysePicture("https://lemmy.world/pictrs/image/fc680df4-954d-4bdf-ab57-cbbf3ad471e5.webp").then((res) => {
-    console.log(res);
-}).catch((err) => {
-  console.error("An error occured while analysing picture");
-    console.error(err);
-})
-
 }
 
 start().catch(x => console.error(x));

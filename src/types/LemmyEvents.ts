@@ -9,12 +9,15 @@ export type LemmyCommentReportEvents =
   | "commentreportupdated";
 export type LemmyMentionEvents = "personmentioned";
 
+export type LemmyModLogEvents = "modlogcreated" | "modlogupdated";
+
 export type LemmyEvents =
   | LemmyPostEvents
   | LemmyPostReportEvents
   | LemmyCommentEvents
   | LemmyCommentReportEvents
-  | LemmyMentionEvents;
+  | LemmyMentionEvents
+  | LemmyModLogEvents;
 
 
 export type ILemmyCommand = {

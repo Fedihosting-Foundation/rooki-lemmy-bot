@@ -132,7 +132,7 @@ class reportService extends baseService<
   }
 
   async resolveRemovedReports() {
-    const reports = await this.getReports(true);
+    const reports = await this.getReports(true, true);
 
     for (const report of reports) {
       if ("post_report" in report) {
@@ -194,7 +194,7 @@ class reportService extends baseService<
     return [...postReports, ...commentReports];
   }
 
-  async getPostReports(force: boolean = false) {
+  async getPostReports(force: boolean = false, unresolved_only: boolean = false) {
     if (!force) {
       const cachedReports = this.postReportCache;
       if (cachedReports.length > 0) {
@@ -206,7 +206,7 @@ class reportService extends baseService<
     for (let i = 1; i <= 10; i++) {
       try {
         reports.push(
-          ...(await client.listPostReports({ auth: getAuth() })).post_reports
+          ...(await client.listPostReports({ auth: getAuth(), unresolved_only })).post_reports
         );
       } catch (e) {
         console.log(e);
@@ -218,7 +218,7 @@ class reportService extends baseService<
     return this.postReportCache;
   }
 
-  async getCommentReports(force: boolean = false) {
+  async getCommentReports(force: boolean = false, unresolved_only: boolean = false) {
     if (!force) {
       const cachedReports = this.commentReportCache;
       if (cachedReports.length > 0) {
@@ -230,7 +230,7 @@ class reportService extends baseService<
     for (let i = 1; i <= 10; i++) {
       try {
         reports.push(
-          ...(await client.listCommentReports({ auth: getAuth() }))
+          ...(await client.listCommentReports({ auth: getAuth(), unresolved_only }))
             .comment_reports,
         );
       } catch (e) {
@@ -242,8 +242,8 @@ class reportService extends baseService<
     return this.commentReportCache;
   }
 
-  async getReports(force: boolean = false) {
-    return [... await this.getCommentReports(force), ... await this.getPostReports(force)];
+  async getReports(force: boolean = false, unresolved_only: boolean = false) {
+    return [... await this.getCommentReports(force, unresolved_only), ... await this.getPostReports(force, unresolved_only)];
   }
 
   async getPostReport(reportId: number) {
