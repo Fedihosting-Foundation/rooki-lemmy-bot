@@ -6,18 +6,11 @@ import { getSlackWebhook } from "../services/adminLogService";
 import userInfoService from "../services/userInfoService";
 import { LemmyEventArguments } from "../types/LemmyEvents";
 import commentViewModel from "../models/commentViewModel";
+import filterUrls from "../../blacklistedurls.json";
 
 const getPersonService = () => {
   return Container.get(userInfoService);
 }
-
-const filterUrls = [
-  "ampliseason.com",
-  "bitdeal.net",
-  "dissertationwritinghelp.uk",
-  "beedai.com",
-  "servicemycar.com"
-]
 
 export default class filterUrl {
   @LemmyOn({ event: "postcreated" })
@@ -26,7 +19,7 @@ export default class filterUrl {
   ) {
     const { post } = event.data;
 
-    if (post.removed || post.deleted) return;
+    if (post.removed || post.deleted || (await getPersonService().getUserInfo(post.creator_id))?.person.person_view.person.admin) return;
     const isFiltered = filterUrls.some((url) =>
       post.url?.includes(url) || post.body?.includes(url) || post.name?.includes(url) || post.name?.includes(url)
     );
@@ -49,9 +42,8 @@ export default class filterUrl {
         await webhook.send({
           text: `${event.data.creator.name} (${post.creator_id}) has been banned for sending a blacklisted URL!  
           
-          Post: ${post.name}  
-          Body: ${post.body}
-          URL: ${post.url}`
+          Post: ${post.ap_id}  
+          `
         });
       }
     }
@@ -63,7 +55,7 @@ export default class filterUrl {
   ) {
     const { comment } = event.data;
 
-    if (comment.removed || comment.deleted) return;
+    if (comment.removed || comment.deleted || (await getPersonService().getUserInfo(comment.creator_id))?.person.person_view.person.admin) return;
     const isFiltered = filterUrls.some((url) =>
       comment.content?.includes(url)
     );

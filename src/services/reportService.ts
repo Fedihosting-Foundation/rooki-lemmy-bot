@@ -148,7 +148,7 @@ class reportService extends baseService<
           }
         }
       } else {
-        if (report.comment.removed) {
+        if (report.comment.deleted || report.comment.removed) {
           try {
             await client.resolveCommentReport({
               auth: getAuth(),
