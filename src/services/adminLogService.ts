@@ -10,8 +10,7 @@ import AdminLogModel, {
 } from "../models/adminLogModel";
 import { IncomingWebhook } from "@slack/webhook";
 
-export const getSlackWebhook = () => {
-  const url = process.env.SLACK_WEBHOOK;
+export const getSlackWebhook = (url: string | undefined = process.env.SLACK_WEBHOOK) => {
   if (!url) {
     return undefined;
   }

@@ -31,7 +31,7 @@ class messageUsers {
         let reason: string | undefined = undefined
 
         if (data.removed_comment !== undefined) {
-            if(!data.removed_comment.mod_remove_comment.removed) return
+            if (!data.removed_comment.mod_remove_comment.removed) return
             url = "https://lemmy.world/comment/" + data.removed_comment.comment.id
             type = "comment"
             moderator = data.removed_comment.moderator
@@ -42,7 +42,7 @@ class messageUsers {
                 return
             }
         } else if (data.removed_post !== undefined) {
-            if(!data.removed_post.mod_remove_post.removed) return
+            if (!data.removed_post.mod_remove_post.removed) return
             url = "https://lemmy.world/post/" + data.removed_post.post.id
             type = "post"
             moderator = data.removed_post.moderator
@@ -52,7 +52,7 @@ class messageUsers {
                 return
             }
         } else if (data.removed_community !== undefined) {
-            if(!data.removed_community.mod_remove_community.removed) return
+            if (!data.removed_community.mod_remove_community.removed) return
             url = "https://lemmy.world/c/" + data.removed_community.community.name
             type = "community"
             moderator = data.removed_community.moderator
